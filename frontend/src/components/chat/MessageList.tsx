@@ -11,6 +11,8 @@ import { sendMessageRead } from "@/lib/ws";
 import { dayKey, formatDayDivider } from "@/lib/time";
 import type { Conversation, Message } from "@/lib/types";
 
+const EMPTY_MESSAGES: Message[] = [];
+
 export function MessageList({
   conversation,
   onReply,
@@ -26,7 +28,7 @@ export function MessageList({
   const appendOlderPage = useMessagesStore((s) => s.appendOlderPage);
   const setHasMoreOlder = useMessagesStore((s) => s.setHasMoreOlder);
   const hasMoreOlder = useMessagesStore((s) => s.hasMoreOlder[conversationId] ?? true);
-  const messages = useMessagesStore((s) => s.byConversation[conversationId] ?? []);
+  const messages = useMessagesStore((s) => s.byConversation[conversationId] ?? EMPTY_MESSAGES);
 
   const consumedPages = React.useRef<Record<number, number>>({});
   const viewportRef = React.useRef<HTMLDivElement>(null);

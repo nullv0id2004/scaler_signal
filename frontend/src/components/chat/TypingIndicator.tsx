@@ -2,6 +2,8 @@
 
 import { usePresenceStore } from "@/lib/store/presence";
 
+const EMPTY_TYPING: Record<number, boolean> = {};
+
 export function TypingIndicator({
   conversationId,
   typingUserNames,
@@ -9,7 +11,7 @@ export function TypingIndicator({
   conversationId: number;
   typingUserNames: (userId: number) => string | null;
 }) {
-  const typingMap = usePresenceStore((s) => s.typing[conversationId] ?? {});
+  const typingMap = usePresenceStore((s) => s.typing[conversationId] ?? EMPTY_TYPING);
   const typingIds = Object.keys(typingMap).map(Number);
 
   if (typingIds.length === 0) return null;
