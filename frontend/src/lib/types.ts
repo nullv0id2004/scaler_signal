@@ -103,12 +103,20 @@ export interface ConversationSummary extends Conversation {
 // ---------- Auth REST ----------
 
 export interface RequestOtpIn {
-  handle: string;
+  phone: string;
+}
+
+export interface RequestOtpOut {
+  ok: boolean;
+  expires_in: number;
+  resend_in: number;
+  /** Only present in dev mode: the OTP itself, shown as an on-screen hint. */
+  dev_code?: string;
 }
 
 export interface VerifyOtpIn {
-  handle: string;
-  otp: string;
+  phone: string;
+  code: string;
 }
 
 export interface TokenOut {
@@ -119,6 +127,7 @@ export interface TokenOut {
 
 export interface CompleteProfileIn {
   display_name: string;
+  username?: string;
   avatar_url?: string | null;
 }
 

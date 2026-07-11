@@ -5,9 +5,11 @@ import { useAuthStore } from "@/lib/store/auth";
 import type {
   Conversation,
   ConversationSummary,
+  CompleteProfileIn,
   CreateConversationIn,
   Message,
   RequestOtpIn,
+  RequestOtpOut,
   TokenOut,
   User,
   UploadOut,
@@ -84,25 +86,25 @@ async function apiFetch<T>(
 // ---------- Auth ----------
 
 export async function requestOtp(body: RequestOtpIn) {
-  return apiFetch<{ ok: boolean }>("/auth/request-otp", {
+  return apiFetch<RequestOtpOut>("/auth/request-otp", {
     method: "POST",
     body: JSON.stringify(body),
     auth: false,
   });
 }
 
-export async function verifyOtp(handle: string, otp: string) {
+export async function verifyOtp(phone: string, code: string) {
   return apiFetch<TokenOut>("/auth/verify-otp", {
     method: "POST",
-    body: JSON.stringify({ handle, otp }),
+    body: JSON.stringify({ phone, code }),
     auth: false,
   });
 }
 
-export async function completeProfile(display_name: string, avatar_url?: string | null) {
+export async function completeProfile(body: CompleteProfileIn) {
   return apiFetch<{ user: User }>("/auth/complete-profile", {
     method: "POST",
-    body: JSON.stringify({ display_name, avatar_url }),
+    body: JSON.stringify(body),
   });
 }
 
