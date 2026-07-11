@@ -36,7 +36,8 @@ Pick your two app names up front (must be **globally unique**). This guide uses:
    | `DATABASE_URL` | `sqlite+aiosqlite:////home/signal.db` |
    | `JWT_SECRET` | `c95ef980ba74a5b4f47acce9649aecf570e9b7a355a3afbcd15d936db877a333` |
    | `CORS_ORIGINS` | `["https://scaler-signal-web.azurewebsites.net"]` |
-   | `FIXED_OTP` | `123456` |
+   | `SMS_PROVIDER` | `console` |
+   | `OTP_DEV_MODE` | `true` |
 
    > `DATABASE_URL` has **four** slashes — `////home/...` — that's an absolute
    > path to the persistent `/home` disk. `CORS_ORIGINS` is a JSON array.
@@ -60,7 +61,7 @@ Pick your two app names up front (must be **globally unique**). This guide uses:
    - **Resource Group**: `scaler-signal-rg` (the same one).
    - **Name**: `scaler-signal-web`.
    - **Publish**: `Code`.
-   - **Runtime stack**: `Node 20 LTS`.
+   - **Runtime stack**: `Node 22 LTS`.
    - **Operating System**: `Linux`.
    - **Pricing plan**: select **existing** `scaler-signal-plan`.
 8. **Review + create** → **Create** → **Go to resource**.

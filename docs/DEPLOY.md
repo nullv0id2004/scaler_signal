@@ -48,7 +48,8 @@ to `main`.
   WebSocket) bound to `$PORT`.
 - **Frontend startup** — `npm start` (`next start`), which binds to `$PORT`.
 - **Config** lives in App Settings, not in the repo:
-  - Backend: `DATABASE_URL`, `JWT_SECRET`, `CORS_ORIGINS`, `FIXED_OTP`.
+  - Backend: `DATABASE_URL`, `JWT_SECRET`, `CORS_ORIGINS`, `SMS_PROVIDER`,
+    `OTP_DEV_MODE`.
   - Frontend: `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_WS_URL` — read by Oryx at
     **build** time and baked into the bundle. Change one → redeploy to rebuild.
 
@@ -60,5 +61,6 @@ to `main`.
   Azure Database for PostgreSQL and swap `DATABASE_URL`.
 - **Uploads** written under the app folder are lost on redeploy. Move to Azure
   Blob Storage for durability.
-- `FIXED_OTP` is a mocked auth stub — replace with a real OTP provider before
-  any real use.
+- OTP runs in dev mode (`SMS_PROVIDER=console`, `OTP_DEV_MODE=true`): codes are
+  logged / returned in the response, no real SMS. Wire a real provider (Twilio)
+  and set `OTP_DEV_MODE=false` before any real use.

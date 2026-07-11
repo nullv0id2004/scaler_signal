@@ -50,15 +50,16 @@ az webapp config appsettings set --resource-group "$RG" --name "$BACKEND_APP" \
     DATABASE_URL="sqlite+aiosqlite:////home/signal.db" \
     JWT_SECRET="$JWT_SECRET" \
     CORS_ORIGINS="[\"${FRONTEND_URL}\"]" \
-    FIXED_OTP="123456" \
+    SMS_PROVIDER="console" \
+    OTP_DEV_MODE="true" \
   -o none
 
 # ---------------------------------------------------------------------------
-# FRONTEND (Node 20)
+# FRONTEND (Node 22)
 # ---------------------------------------------------------------------------
 echo "==> Frontend Web App"
 az webapp create --resource-group "$RG" --plan "$PLAN" \
-  --name "$FRONTEND_APP" --runtime "NODE:20-lts" -o none
+  --name "$FRONTEND_APP" --runtime "NODE:22-lts" -o none
 
 echo "==> Frontend: startup command, HTTPS-only"
 az webapp config set --resource-group "$RG" --name "$FRONTEND_APP" \
