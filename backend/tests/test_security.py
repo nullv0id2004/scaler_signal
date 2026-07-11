@@ -12,7 +12,12 @@ def test_roundtrip():
 
 def test_tampered_token_raises():
     t = create_access_token(1)
-    tampered = t[:-1] + ("a" if t[-1] != "a" else "b")
+    # Flip a character in the payload segment (not the last char of the
+    # signature, whose trailing base64 bits can be padding-insensitive).
+    header, payload, signature = t.split(".")
+    flipped = "a" if payload[-1] != "a" else "b"
+    tampered_payload = payload[:-1] + flipped
+    tampered = f"{header}.{tampered_payload}.{signature}"
     with pytest.raises(Exception):
         decode_token(tampered)
 

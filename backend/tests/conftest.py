@@ -48,6 +48,28 @@ async def session(test_engine):
 
 
 @pytest_asyncio.fixture
+async def alice(session):
+    """A seeded user for service-level tests."""
+    from app.services import users as user_service
+
+    user = await user_service.create(session, username="alice", display_name="Alice")
+    await session.commit()
+    await session.refresh(user)
+    return user
+
+
+@pytest_asyncio.fixture
+async def bob(session):
+    """A second seeded user for service-level tests."""
+    from app.services import users as user_service
+
+    user = await user_service.create(session, username="bob", display_name="Bob")
+    await session.commit()
+    await session.refresh(user)
+    return user
+
+
+@pytest_asyncio.fixture
 async def client(test_engine):
     """httpx AsyncClient against the app, with get_session overridden to the
     isolated temp test DB so endpoint tests never touch production data."""

@@ -2,6 +2,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .api.auth import router as auth_router
+from .api.conversations import router as conversations_router
+from .api.messages import router as messages_router
 from .core.config import settings
 
 
@@ -20,6 +22,8 @@ def create_app() -> FastAPI:
         return {"status": "ok"}
 
     app.include_router(auth_router)
+    app.include_router(conversations_router)
+    app.include_router(messages_router)
 
     return app
 
