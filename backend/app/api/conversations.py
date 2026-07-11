@@ -5,14 +5,18 @@ from app.core.db import get_session
 from app.core.security import get_current_user
 from app.models import User
 from app.schemas.conversation import (
+    AddMembersIn,
+    ConversationMemberOut,
     ConversationOut,
     ConversationSummaryOut,
     ConversationWithMembersOut,
     CreateConversationIn,
+    SetRoleIn,
     UpdateConversationIn,
 )
 from app.schemas.message import MessageOut
 from app.services import conversations as conversation_service
+from app.services import membership as membership_service
 from app.services import messages as message_service
 
 router = APIRouter(prefix="/api/conversations", tags=["conversations"])
@@ -81,3 +85,51 @@ async def patch_conversation(
         avatar_url=payload.avatar_url,
     )
     return ConversationOut.model_validate(conv)
+
+
+@router.post("/{conversation_id}/members", response_model=list[ConversationMemberOut])
+async def add_members_endpoint(
+    conversation_id: int,
+    payload: AddMembersIn,
+    current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+):
+    members = await membership_service.add_members(
+        session, conversation_id, current_user, payload.user_ids
+    )
+    return [ConversationMemberOut.model_validate(m) for m in members]
+
+
+@router.delete("/{conversation_id}/members/{user_id}")
+async def remove_member_endpoint(
+    conversation_id: int,
+    user_id: int,
+    current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+):
+    await membership_service.remove_member(session, conversation_id, current_user, user_id)
+    return {"ok": True}
+
+
+@router.patch("/{conversation_id}/members/{user_id}", response_model=ConversationMemberOut)
+async def set_role_endpoint(
+    conversation_id: int,
+    user_id: int,
+    payload: SetRoleIn,
+    current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+):
+    member = await membership_service.set_role(
+        session, conversation_id, current_user, user_id, payload.role
+    )
+    return ConversationMemberOut.model_validate(member)
+
+
+@router.post("/{conversation_id}/leave")
+async def leave_endpoint(
+    conversation_id: int,
+    current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+):
+    await membership_service.leave(session, conversation_id, current_user)
+    return {"ok": True}

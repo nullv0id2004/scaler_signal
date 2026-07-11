@@ -47,3 +47,11 @@ class CreateConversationIn(BaseModel):
 class UpdateConversationIn(BaseModel):
     name: str | None = None
     avatar_url: str | None = None
+
+
+class AddMembersIn(BaseModel):
+    user_ids: list[int]
+
+
+class SetRoleIn(BaseModel):
+    role: str
