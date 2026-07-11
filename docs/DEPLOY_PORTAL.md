@@ -106,8 +106,10 @@ The repo already has `.github/workflows/deploy-backend.yml` and
 
 - Backend health: open `https://signal-api.azurewebsites.net/api/health`
   → `{"status":"ok"}`.
-- Frontend: open `https://signal-frontend.azurewebsites.net` → log in as a
-  seeded user + OTP `123456`.
+- Frontend: open `https://signal-frontend.azurewebsites.net` → log in by phone
+  (country US +1, number `2025550111` for Alice). A real OTP is generated; in
+  dev mode (`OTP_DEV_MODE=true`) the code shows on the verify screen and in the
+  backend log stream. Full seed phone list in `SEED_USERS.md`.
 - First backend boot runs `alembic upgrade head` (creates the DB). If login
   fails, seed users: backend app → **SSH** (or **Console**) →
   `python -m app.seed`.
