@@ -60,6 +60,29 @@ async def test_get_with_members_returns_members(session, alice, bob):
     assert result.id == conv.id
     assert {m.user_id for m in result.members} == {alice.id, bob.id}
 
+    # Each member has its User embedded (frontend resolves direct-chat name/
+    # avatar from members[].user).
+    by_user_id = {m.user_id: m for m in result.members}
+    assert by_user_id[alice.id].user is not None
+    assert by_user_id[alice.id].user.username == alice.username
+    assert by_user_id[bob.id].user is not None
+    assert by_user_id[bob.id].user.username == bob.username
+    assert all(m.conversation_id == conv.id for m in result.members)
+
+
+@pytest.mark.asyncio
+async def test_list_for_user_includes_members_with_embedded_user(session, alice, bob):
+    conv = await create_conversation(session, alice, "direct", [bob.id])
+    await create_message(session, bob, conv.id, content="hi alice")
+
+    summaries = await list_for_user(session, alice)
+    assert len(summaries) == 1
+    members = summaries[0].members
+    assert {m.user_id for m in members} == {alice.id, bob.id}
+    by_user_id = {m.user_id: m for m in members}
+    assert by_user_id[bob.id].user is not None
+    assert by_user_id[bob.id].user.display_name == bob.display_name
+
 
 async def _login(client, handle):
     r = await client.post("/api/auth/verify-otp", json={"handle": handle, "otp": "123456"})
@@ -69,7 +92,7 @@ async def _login(client, handle):
 
 @pytest.mark.asyncio
 async def test_http_create_and_list_conversations(client):
-    alice_token, _ = await _login(client, "alice_h")
+    alice_token, alice_user = await _login(client, "alice_h")
     _, bob_user = await _login(client, "bob_h")
 
     headers = {"Authorization": f"Bearer {alice_token}"}
@@ -85,6 +108,13 @@ async def test_http_create_and_list_conversations(client):
     assert r.status_code == 200
     convs = r.json()
     assert any(c["id"] == conv_id for c in convs)
+
+    summary = next(c for c in convs if c["id"] == conv_id)
+    assert "members" in summary
+    member_user_ids = {m["user_id"] for m in summary["members"]}
+    assert member_user_ids == {alice_user["id"], bob_user["id"]}
+    assert all(m.get("user") is not None for m in summary["members"])
+    assert all(m["user"]["username"] for m in summary["members"])
 
 
 @pytest.mark.asyncio

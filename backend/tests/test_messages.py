@@ -62,6 +62,7 @@ async def test_serialize_includes_reactions_and_reply_preview(session, alice, bo
     assert out.content == "reply"
     assert out.reply_to is not None
     assert out.reply_to.id == m1.id
+    assert out.reply_to.sender_name == alice.display_name
     assert out.reactions == []
     assert out.attachment is None
 

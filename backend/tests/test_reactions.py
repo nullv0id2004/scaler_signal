@@ -15,6 +15,7 @@ async def test_toggle_add_then_remove(session, alice, bob):
     assert len(reactions) == 1
     assert reactions[0].emoji == "👍"
     assert reactions[0].user_id == bob.id
+    assert reactions[0].message_id == msg.id
 
     reactions = await toggle(session, bob, msg.id, "👍")
     assert reactions == []

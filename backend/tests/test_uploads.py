@@ -32,8 +32,8 @@ async def test_upload_image_returns_url_and_dimensions(client, tmp_path, monkeyp
     body = r.json()
     assert body["url"].startswith("/uploads/")
     assert body["mime"] == "image/png"
-    assert body["width"] == 40
-    assert body["height"] == 20
+    assert body["w"] == 40
+    assert body["h"] == 20
     assert body["size"] > 0
 
     saved = list(tmp_path.glob("*.png"))
@@ -54,5 +54,5 @@ async def test_upload_non_image_has_null_dimensions(client, tmp_path, monkeypatc
 
     assert r.status_code == 200
     body = r.json()
-    assert body["width"] is None
-    assert body["height"] is None
+    assert body["w"] is None
+    assert body["h"] is None

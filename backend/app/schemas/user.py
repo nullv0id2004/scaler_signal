@@ -8,10 +8,12 @@ class UserOut(BaseModel):
 
     id: int
     username: str
+    phone: str | None = None
     display_name: str
     avatar_url: str | None = None
     about: str | None = None
     last_seen_at: datetime | None = None
+    created_at: datetime
 
 
 class UpdateProfileIn(BaseModel):

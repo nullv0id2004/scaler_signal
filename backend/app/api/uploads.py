@@ -44,7 +44,7 @@ async def upload_file(
         "url": f"/uploads/{stored_name}",
         "mime": mime,
         "size": len(contents),
-        "width": width,
-        "height": height,
+        "w": width,
+        "h": height,
         "filename": file.filename or stored_name,
     }

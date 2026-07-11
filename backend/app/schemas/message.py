@@ -19,6 +19,7 @@ class ReactionOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
+    message_id: int
     user_id: int
     emoji: str
 
@@ -28,6 +29,7 @@ class ReplyPreviewOut(BaseModel):
 
     id: int
     sender_id: int
+    sender_name: str | None = None
     content: str | None = None
     type: str
 

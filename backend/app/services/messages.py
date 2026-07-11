@@ -2,7 +2,7 @@ from fastapi import HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import Attachment, Message, MessageReaction
+from app.models import Attachment, Message, MessageReaction, User
 from app.models.enums import MessageType
 from app.schemas.message import AttachmentOut, MessageOut, ReactionOut, ReplyPreviewOut
 
@@ -101,7 +101,17 @@ async def serialize(session: AsyncSession, message: Message) -> MessageOut:
         )
         reply_msg = reply_result.scalar_one_or_none()
         if reply_msg is not None:
-            reply_to = ReplyPreviewOut.model_validate(reply_msg)
+            sender_result = await session.execute(
+                select(User).where(User.id == reply_msg.sender_id)
+            )
+            reply_sender = sender_result.scalar_one_or_none()
+            reply_to = ReplyPreviewOut(
+                id=reply_msg.id,
+                sender_id=reply_msg.sender_id,
+                sender_name=reply_sender.display_name if reply_sender else None,
+                content=reply_msg.content,
+                type=reply_msg.type,
+            )
 
     return MessageOut(
         id=message.id,

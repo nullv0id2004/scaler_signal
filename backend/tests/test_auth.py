@@ -36,12 +36,14 @@ async def test_login_flow(client):
     assert r.status_code == 200
     body = r.json()
     assert body["is_new"] is True and body["token"]
+    assert body["user"]["created_at"]
 
     me = await client.get(
         "/api/auth/me", headers={"Authorization": f"Bearer {body['token']}"}
     )
     assert me.status_code == 200
     assert me.json()["username"] == "newuser"
+    assert me.json()["created_at"]
 
 
 @pytest.mark.asyncio

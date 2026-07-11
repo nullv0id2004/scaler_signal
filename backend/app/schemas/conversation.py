@@ -3,18 +3,21 @@ from datetime import datetime
 from pydantic import BaseModel, ConfigDict
 
 from app.schemas.message import MessageOut
+from app.schemas.user import UserOut
 
 
 class ConversationMemberOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
+    conversation_id: int
     user_id: int
     role: str
     joined_at: datetime
     last_read_message_id: int | None = None
     last_delivered_message_id: int | None = None
     muted: bool
+    user: UserOut | None = None
 
 
 class ConversationOut(BaseModel):
@@ -32,7 +35,7 @@ class ConversationWithMembersOut(ConversationOut):
     members: list[ConversationMemberOut] = []
 
 
-class ConversationSummaryOut(ConversationOut):
+class ConversationSummaryOut(ConversationWithMembersOut):
     last_message: MessageOut | None = None
     unread_count: int = 0
 

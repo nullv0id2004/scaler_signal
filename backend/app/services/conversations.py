@@ -2,13 +2,14 @@ from fastapi import HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import Conversation, ConversationMember, Message
+from app.models import Conversation, ConversationMember, Message, User
 from app.models.enums import ConversationType, MemberRole
 from app.schemas.conversation import (
     ConversationMemberOut,
     ConversationSummaryOut,
     ConversationWithMembersOut,
 )
+from app.schemas.user import UserOut
 
 
 async def get_members(session: AsyncSession, conversation_id: int) -> list[ConversationMember]:
@@ -28,6 +29,37 @@ async def get_member(
         )
     )
     return result.scalar_one_or_none()
+
+
+async def serialize_members(
+    session: AsyncSession, conversation_id: int
+) -> list[ConversationMemberOut]:
+    """Load members of a conversation with their User embedded, matching the
+    frontend's ConversationMember shape (members[].user)."""
+    members = await get_members(session, conversation_id)
+    if not members:
+        return []
+
+    user_ids = {m.user_id for m in members}
+    users_result = await session.execute(select(User).where(User.id.in_(user_ids)))
+    users_by_id = {u.id: u for u in users_result.scalars().all()}
+
+    return [
+        ConversationMemberOut(
+            id=m.id,
+            conversation_id=m.conversation_id,
+            user_id=m.user_id,
+            role=m.role,
+            joined_at=m.joined_at,
+            last_read_message_id=m.last_read_message_id,
+            last_delivered_message_id=m.last_delivered_message_id,
+            muted=m.muted,
+            user=UserOut.model_validate(users_by_id[m.user_id])
+            if m.user_id in users_by_id
+            else None,
+        )
+        for m in members
+    ]
 
 
 async def _find_existing_direct(
@@ -114,6 +146,7 @@ async def list_for_user(session: AsyncSession, user) -> list[ConversationSummary
         unread_count = len(list(count_result.scalars().all()))
 
         last_message_out = await serialize(session, last_message) if last_message else None
+        members_out = await serialize_members(session, conv.id)
 
         summaries.append(
             ConversationSummaryOut(
@@ -123,6 +156,7 @@ async def list_for_user(session: AsyncSession, user) -> list[ConversationSummary
                 avatar_url=conv.avatar_url,
                 created_by=conv.created_by,
                 created_at=conv.created_at,
+                members=members_out,
                 last_message=last_message_out,
                 unread_count=unread_count,
             )
@@ -151,7 +185,7 @@ async def get_with_members(
             status_code=status.HTTP_403_FORBIDDEN, detail="Not a member of this conversation"
         )
 
-    members = await get_members(session, conversation_id)
+    members_out = await serialize_members(session, conversation_id)
     return ConversationWithMembersOut(
         id=conv.id,
         type=conv.type,
@@ -159,7 +193,7 @@ async def get_with_members(
         avatar_url=conv.avatar_url,
         created_by=conv.created_by,
         created_at=conv.created_at,
-        members=[ConversationMemberOut.model_validate(m) for m in members],
+        members=members_out,
     )
 
 
