@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from .api.auth import router as auth_router
+from .api.contacts import router as contacts_router
 from .api.conversations import router as conversations_router
 from .api.messages import router as messages_router
 from .api.uploads import UPLOAD_DIR
@@ -27,6 +28,7 @@ def create_app() -> FastAPI:
         return {"status": "ok"}
 
     app.include_router(auth_router)
+    app.include_router(contacts_router)
     app.include_router(conversations_router)
     app.include_router(messages_router)
     app.include_router(uploads_router)

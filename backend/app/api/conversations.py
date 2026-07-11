@@ -11,13 +11,17 @@ from app.schemas.conversation import (
     ConversationSummaryOut,
     ConversationWithMembersOut,
     CreateConversationIn,
+    SetChatColorIn,
+    SetDisappearingIn,
     SetRoleIn,
     UpdateConversationIn,
 )
-from app.schemas.message import MessageOut
+from app.schemas.message import MediaOut, MessageOut
+from app.schemas.ws import frame
 from app.services import conversations as conversation_service
 from app.services import membership as membership_service
 from app.services import messages as message_service
+from app.ws.manager import manager
 
 router = APIRouter(prefix="/api/conversations", tags=["conversations"])
 
@@ -68,6 +72,48 @@ async def get_conversation_messages(
         session, current_user, conversation_id, before=before, limit=limit
     )
     return [await message_service.serialize(session, m) for m in msgs]
+
+
+@router.get("/{conversation_id}/media", response_model=MediaOut)
+async def get_conversation_media(
+    conversation_id: int,
+    current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+):
+    return await message_service.media(session, current_user, conversation_id)
+
+
+@router.patch("/{conversation_id}/disappearing", response_model=ConversationOut)
+async def set_disappearing_endpoint(
+    conversation_id: int,
+    payload: SetDisappearingIn,
+    current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+):
+    conv, system_message = await conversation_service.set_disappearing(
+        session, conversation_id, current_user, payload.seconds
+    )
+
+    members = await conversation_service.get_members(session, conversation_id)
+    message_out = await message_service.serialize(session, system_message)
+    await manager.broadcast(
+        [m.user_id for m in members], frame("message.new", message_out.model_dump(mode="json"))
+    )
+
+    return ConversationOut.model_validate(conv)
+
+
+@router.patch("/{conversation_id}/chat-color", response_model=ConversationMemberOut)
+async def set_chat_color_endpoint(
+    conversation_id: int,
+    payload: SetChatColorIn,
+    current_user: User = Depends(get_current_user),
+    session: AsyncSession = Depends(get_session),
+):
+    member = await conversation_service.set_chat_color(
+        session, conversation_id, current_user, payload.color
+    )
+    return await conversation_service.serialize_member(session, member, viewer_id=current_user.id)
 
 
 @router.patch("/{conversation_id}", response_model=ConversationOut)
