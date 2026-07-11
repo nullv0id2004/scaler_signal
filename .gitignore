@@ -20,3 +20,6 @@ frontend/.env*.local
 
 # SDD scratch
 .superpowers/
+
+# Azure deploy credentials
+*.publishsettings

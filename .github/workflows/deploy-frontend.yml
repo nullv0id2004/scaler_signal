@@ -1,0 +1,26 @@
+name: Deploy Frontend (Azure App Service)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "frontend/**"
+      - ".github/workflows/deploy-frontend.yml"
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Azure builds remotely (Oryx): npm install + npm run build, then `npm start`.
+      # NEXT_PUBLIC_* vars are baked at BUILD time, so they must exist as App
+      # Settings on the Web App (set in infra/azure-setup.sh) — Oryx reads them
+      # during the remote build. Web App has SCM_DO_BUILD_DURING_DEPLOYMENT=true.
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ vars.FRONTEND_APP_NAME }}
+          publish-profile: ${{ secrets.AZURE_FRONTEND_PUBLISH_PROFILE }}
+          package: frontend
