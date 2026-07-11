@@ -35,7 +35,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   const match = pathname.match(/^\/c\/(\d+)/);
   const activeId = match ? Number(match[1]) : null;
-  const isConversationOpen = activeId !== null;
+  // The right pane is "open" for a conversation OR a full-page detail view
+  // (own profile, another user's profile) — on mobile these replace the
+  // sidebar the same way a chat does.
+  const isConversationOpen =
+    activeId !== null || pathname === "/profile" || /^\/u\/\d+/.test(pathname);
 
   if (!hydrated || !token || !user) {
     return (

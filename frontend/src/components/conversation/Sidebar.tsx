@@ -40,8 +40,9 @@ export function Sidebar({ activeId, className }: { activeId: number | null; clas
     <div className={cn("flex h-full flex-col border-r border-border bg-bg-panel", className)}>
       <div className="flex items-center justify-between gap-2 px-4 py-3">
         <button
-          onClick={() => setSettingsOpen(true)}
+          onClick={() => router.push("/profile")}
           className="flex items-center gap-2 rounded-lg px-1.5 py-1 hover:bg-bg-hover"
+          title="Edit profile"
         >
           <UserAvatar id={user?.id ?? 0} name={user?.display_name ?? "?"} src={user?.avatar_url} className="h-9 w-9" />
           <span className="max-w-[9rem] truncate text-sm font-medium text-foreground">

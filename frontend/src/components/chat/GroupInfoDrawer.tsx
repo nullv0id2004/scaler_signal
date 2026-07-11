@@ -57,6 +57,11 @@ export function GroupInfoDrawer({
   const isOnline = usePresenceStore((s) => s.isOnline);
   const lastSeen = usePresenceStore((s) => s.lastSeen);
 
+  function goToProfile(userId: number) {
+    onOpenChange(false);
+    router.push(`/u/${userId}`);
+  }
+
   const addMembers = useAddMembers();
   const removeMember = useRemoveMember();
   const setRole = useSetMemberRole();
@@ -127,15 +132,26 @@ export function GroupInfoDrawer({
           </SheetHeader>
           <ScrollArea className="flex-1">
             <div className="flex flex-col items-center gap-2 px-5 py-6">
-              <UserAvatar id={avatar.id} name={title} src={avatar.url} className="h-24 w-24 text-3xl" />
-              <div className="text-lg font-semibold text-foreground">{title}</div>
               {!isGroup && other ? (
-                <div className="text-xs text-muted-foreground">
-                  {isOnline(other.user_id)
-                    ? "online"
-                    : formatLastSeen(lastSeen(other.user_id) ?? other.user?.last_seen_at ?? null)}
-                </div>
-              ) : null}
+                <button
+                  onClick={() => goToProfile(other.user_id)}
+                  className="flex flex-col items-center gap-2 rounded-xl px-3 py-1 hover:bg-bg-hover"
+                  title="View profile"
+                >
+                  <UserAvatar id={avatar.id} name={title} src={avatar.url} className="h-24 w-24 text-3xl" />
+                  <div className="text-lg font-semibold text-foreground">{title}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {isOnline(other.user_id)
+                      ? "online"
+                      : formatLastSeen(lastSeen(other.user_id) ?? other.user?.last_seen_at ?? null)}
+                  </div>
+                </button>
+              ) : (
+                <>
+                  <UserAvatar id={avatar.id} name={title} src={avatar.url} className="h-24 w-24 text-3xl" />
+                  <div className="text-lg font-semibold text-foreground">{title}</div>
+                </>
+              )}
             </div>
 
             <Separator />
@@ -159,23 +175,29 @@ export function GroupInfoDrawer({
                 <div className="flex flex-col gap-1">
                   {members.map((m) => (
                     <div key={m.id} className="flex items-center gap-3 rounded-lg px-1 py-2">
-                      <UserAvatar
-                        id={m.user_id}
-                        name={m.user?.display_name ?? "?"}
-                        src={m.user?.avatar_url}
-                        className="h-9 w-9 text-xs"
-                      />
-                      <div className="min-w-0 flex-1">
-                        <div className="truncate text-sm font-medium text-foreground">
-                          {m.user?.display_name}
-                          {m.user_id === selfId ? " (you)" : ""}
-                        </div>
-                        {m.role === "admin" ? (
-                          <div className="flex items-center gap-1 text-xs text-signal-blue">
-                            <Crown className="h-3 w-3" /> Admin
+                      <button
+                        onClick={() => goToProfile(m.user_id)}
+                        className="flex min-w-0 flex-1 items-center gap-3 rounded-lg text-left hover:bg-bg-hover"
+                        title="View profile"
+                      >
+                        <UserAvatar
+                          id={m.user_id}
+                          name={m.user?.display_name ?? "?"}
+                          src={m.user?.avatar_url}
+                          className="h-9 w-9 text-xs"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate text-sm font-medium text-foreground">
+                            {m.user?.display_name}
+                            {m.user_id === selfId ? " (you)" : ""}
                           </div>
-                        ) : null}
-                      </div>
+                          {m.role === "admin" ? (
+                            <div className="flex items-center gap-1 text-xs text-signal-blue">
+                              <Crown className="h-3 w-3" /> Admin
+                            </div>
+                          ) : null}
+                        </div>
+                      </button>
                       {isAdmin && m.user_id !== selfId ? (
                         <div className="flex items-center gap-1">
                           {m.role !== "admin" ? (

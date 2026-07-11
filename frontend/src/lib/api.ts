@@ -133,6 +133,18 @@ export async function patchMe(patch: { display_name?: string; about?: string; av
   });
 }
 
+export async function getUser(id: number) {
+  return apiFetch<User>(`/users/${id}`);
+}
+
+export function useUser(id: number | null) {
+  return useQuery({
+    queryKey: ["user", id],
+    queryFn: () => getUser(id as number),
+    enabled: id != null,
+  });
+}
+
 // ---------- Conversations ----------
 
 export function useConversations() {
