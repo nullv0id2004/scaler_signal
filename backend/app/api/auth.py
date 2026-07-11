@@ -20,14 +20,15 @@ router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 
 @router.post("/request-otp", response_model=RequestOtpOut)
-async def request_otp(payload: RequestOtpIn):
-    # Mocked OTP: always "sends" the fixed code, nothing to persist.
-    return RequestOtpOut(ok=True)
+async def request_otp(payload: RequestOtpIn, session: AsyncSession = Depends(get_session)):
+    result = await auth_service.request_otp(session, payload.phone)
+    return RequestOtpOut(**result)
 
 
 @router.post("/verify-otp", response_model=TokenOut)
 async def verify_otp(payload: VerifyOtpIn, session: AsyncSession = Depends(get_session)):
-    user, is_new = await auth_service.verify_otp(session, payload.handle, payload.otp)
+    user, created = await auth_service.verify_otp(session, payload.phone, payload.code)
+    is_new = created or not user.display_name
     token = create_access_token(user.id)
     return TokenOut(token=token, user=UserOut.model_validate(user), is_new=is_new)
 
@@ -43,6 +44,7 @@ async def complete_profile(
         current_user,
         display_name=payload.display_name,
         avatar_url=payload.avatar_url,
+        username=payload.username,
     )
     await session.commit()
     await session.refresh(user)

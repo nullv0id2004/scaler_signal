@@ -4,16 +4,19 @@ from app.schemas.user import UserOut
 
 
 class RequestOtpIn(BaseModel):
-    handle: str
+    phone: str
 
 
 class RequestOtpOut(BaseModel):
     ok: bool = True
+    expires_in: int
+    resend_in: int
+    dev_code: str | None = None
 
 
 class VerifyOtpIn(BaseModel):
-    handle: str
-    otp: str
+    phone: str
+    code: str
 
 
 class TokenOut(BaseModel):
@@ -24,6 +27,7 @@ class TokenOut(BaseModel):
 
 class CompleteProfileIn(BaseModel):
     display_name: str
+    username: str | None = None
     avatar_url: str | None = None
 
 
