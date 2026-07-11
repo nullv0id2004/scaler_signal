@@ -13,6 +13,7 @@ dependencies = [
     "python-jose[cryptography]",
     "python-multipart",
     "passlib",
+    "pillow",
 ]
 
 [project.optional-dependencies]
