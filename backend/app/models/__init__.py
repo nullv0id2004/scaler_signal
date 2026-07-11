@@ -6,6 +6,7 @@ from app.models.message import Message
 from app.models.reaction import MessageReaction
 from app.models.attachment import Attachment
 from app.models.contact_note import ContactNote
+from app.models.otp_code import OtpCode
 
 __all__ = [
     "User",
@@ -15,6 +16,7 @@ __all__ = [
     "MessageReaction",
     "Attachment",
     "ContactNote",
+    "OtpCode",
     "ConversationType",
     "MemberRole",
     "MessageType",

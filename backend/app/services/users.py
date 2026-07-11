@@ -1,3 +1,4 @@
+from fastapi import HTTPException, status
 from sqlalchemy import or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -12,6 +13,12 @@ async def get_by_handle(session: AsyncSession, handle: str) -> User | None:
     return result.scalar_one_or_none()
 
 
+async def get_by_phone(session: AsyncSession, phone: str) -> User | None:
+    """Look up a user by (already-normalized) phone number."""
+    result = await session.execute(select(User).where(User.phone == phone))
+    return result.scalar_one_or_none()
+
+
 async def get_by_id(session: AsyncSession, user_id: int) -> User | None:
     result = await session.execute(select(User).where(User.id == user_id))
     return result.scalar_one_or_none()
@@ -23,7 +30,9 @@ async def create(
     display_name: str | None = None,
     phone: str | None = None,
 ) -> User:
-    user = User(username=username, display_name=display_name or username, phone=phone)
+    if display_name is None:
+        display_name = username
+    user = User(username=username, display_name=display_name, phone=phone)
     session.add(user)
     await session.flush()
     return user
@@ -35,7 +44,15 @@ async def update_profile(
     display_name: str | None = None,
     avatar_url: str | None = None,
     about: str | None = None,
+    username: str | None = None,
 ) -> User:
+    if username is not None and username != user.username:
+        existing = await session.execute(select(User).where(User.username == username))
+        if existing.scalar_one_or_none() is not None:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT, detail="username already taken"
+            )
+        user.username = username
     if display_name is not None:
         user.display_name = display_name
     if avatar_url is not None:
