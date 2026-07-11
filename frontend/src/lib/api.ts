@@ -13,6 +13,9 @@ import type {
   UploadOut,
   MemberRole,
   ConversationMember,
+  ConversationMediaOut,
+  ContactInfo,
+  UpdateContactIn,
 } from "@/lib/types";
 
 export const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
@@ -278,6 +281,75 @@ export function useLeaveConversation() {
         method: "POST",
       }),
     onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["conversations"] });
+    },
+  });
+}
+
+// ---------- Media ----------
+
+export function useConversationMedia(id: number | null) {
+  return useQuery({
+    queryKey: ["conversation-media", id],
+    queryFn: () => apiFetch<ConversationMediaOut>(`/conversations/${id}/media`),
+    enabled: id != null,
+  });
+}
+
+// ---------- Disappearing messages ----------
+
+export function usePatchDisappearing() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, seconds }: { id: number; seconds: number | null }) =>
+      apiFetch<Conversation>(`/conversations/${id}/disappearing`, {
+        method: "PATCH",
+        body: JSON.stringify({ seconds }),
+      }),
+    onSuccess: (_, { id }) => {
+      qc.invalidateQueries({ queryKey: ["conversation", id] });
+      qc.invalidateQueries({ queryKey: ["conversations"] });
+    },
+  });
+}
+
+// ---------- Chat color ----------
+
+export function usePatchChatColor() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, color }: { id: number; color: string | null }) =>
+      apiFetch<ConversationMember>(`/conversations/${id}/chat-color`, {
+        method: "PATCH",
+        body: JSON.stringify({ color }),
+      }),
+    onSuccess: (_, { id }) => {
+      qc.invalidateQueries({ queryKey: ["conversation", id] });
+    },
+  });
+}
+
+// ---------- Contacts (nickname / note) ----------
+
+export function useContact(userId: number | null) {
+  return useQuery({
+    queryKey: ["contact", userId],
+    queryFn: () => apiFetch<ContactInfo>(`/contacts/${userId}`),
+    enabled: userId != null,
+  });
+}
+
+export function useUpdateContact() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ userId, patch }: { userId: number; patch: UpdateContactIn }) =>
+      apiFetch<ContactInfo>(`/contacts/${userId}`, {
+        method: "PUT",
+        body: JSON.stringify(patch),
+      }),
+    onSuccess: (_, { userId }) => {
+      qc.invalidateQueries({ queryKey: ["contact", userId] });
+      qc.invalidateQueries({ queryKey: ["conversation"] });
       qc.invalidateQueries({ queryKey: ["conversations"] });
     },
   });

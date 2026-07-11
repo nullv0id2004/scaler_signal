@@ -38,3 +38,33 @@ export function formatLastSeen(iso: string | null): string {
   if (!iso) return "offline";
   return `last seen ${formatDistanceToNowStrict(new Date(iso), { addSuffix: true })}`;
 }
+
+/** Disappearing-message timer options shown in the conversation info drawer. */
+export const DISAPPEARING_OPTIONS: { label: string; seconds: number | null }[] = [
+  { label: "Off", seconds: null },
+  { label: "30 seconds", seconds: 30 },
+  { label: "5 minutes", seconds: 300 },
+  { label: "1 hour", seconds: 3600 },
+  { label: "1 day", seconds: 86400 },
+  { label: "1 week", seconds: 604800 },
+];
+
+/** Compact label for a disappearing-message duration, e.g. "5m", "1h". Used in the Header badge. */
+export function formatDisappearingLabel(seconds: number | null | undefined): string | null {
+  if (!seconds) return null;
+  if (seconds < 60) return `${seconds}s`;
+  if (seconds < 3600) return `${Math.round(seconds / 60)}m`;
+  if (seconds < 86400) return `${Math.round(seconds / 3600)}h`;
+  if (seconds < 604800) return `${Math.round(seconds / 86400)}d`;
+  return `${Math.round(seconds / 604800)}w`;
+}
+
+/** Compact remaining-time label for a message's expires_at, e.g. "23h left". Null once expired. */
+export function formatExpiresIn(iso: string | null | undefined): string | null {
+  if (!iso) return null;
+  const ms = new Date(iso).getTime() - Date.now();
+  if (ms <= 0) return null;
+  const seconds = Math.ceil(ms / 1000);
+  const label = formatDisappearingLabel(seconds) ?? `${seconds}s`;
+  return `${label} left`;
+}

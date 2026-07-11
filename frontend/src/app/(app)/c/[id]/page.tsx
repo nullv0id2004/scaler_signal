@@ -8,6 +8,7 @@ import { Composer } from "@/components/chat/Composer";
 import { GroupInfoDrawer } from "@/components/chat/GroupInfoDrawer";
 import { useConversation } from "@/lib/api";
 import { useConversationsUiStore } from "@/lib/store/conversations";
+import { displayNameFor } from "@/lib/conversation-utils";
 import type { Message } from "@/lib/types";
 
 export default function ChatPage() {
@@ -35,7 +36,7 @@ export default function ChatPage() {
   }, [conversationId, setActive]);
 
   const resolveSenderName = React.useCallback(
-    (userId: number) => conversation?.members?.find((m) => m.user_id === userId)?.user?.display_name ?? "Unknown",
+    (userId: number) => displayNameFor(conversation?.members?.find((m) => m.user_id === userId)),
     [conversation]
   );
 

@@ -4,10 +4,20 @@ export function otherMember(conv: Conversation, selfId: number): ConversationMem
   return conv.members?.find((m) => m.user_id !== selfId);
 }
 
+/**
+ * Resolve the name to render for a user, preferring the viewer's nickname
+ * for that member (if set) over the user's own display_name.
+ */
+export function displayNameFor(member?: ConversationMember | null, user?: User | null): string {
+  const u = user ?? member?.user;
+  return member?.nickname ?? u?.display_name ?? "Unknown";
+}
+
 export function conversationTitle(conv: Conversation, selfId: number): string {
   if (conv.type === "group") return conv.name || "Unnamed group";
   const other = otherMember(conv, selfId);
-  return other?.user?.display_name ?? "Direct message";
+  if (!other) return "Direct message";
+  return displayNameFor(other);
 }
 
 export function conversationAvatar(conv: Conversation, selfId: number): { url: string | null; id: number | string } {
@@ -25,7 +35,7 @@ export function messagePreview(message: Message | null, selfId: number, members?
     message.sender_id === selfId
       ? "You: "
       : members && members.length > 2
-        ? `${members.find((m) => m.user_id === message.sender_id)?.user?.display_name?.split(" ")[0] ?? ""}: `
+        ? `${displayNameFor(members.find((m) => m.user_id === message.sender_id)).split(" ")[0]}: `
         : "";
   switch (message.type) {
     case "image":

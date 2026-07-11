@@ -27,6 +27,12 @@ export function colorForId(id: number | string): string {
   return AVATAR_PALETTE[Math.abs(n) % AVATAR_PALETTE.length];
 }
 
+export function formatBytes(n: number): string {
+  if (n < 1024) return `${n} B`;
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
+  return `${(n / 1024 / 1024).toFixed(1)} MB`;
+}
+
 function hashString(s: string): number {
   let h = 0;
   for (let i = 0; i < s.length; i++) {

@@ -9,6 +9,7 @@ import { useMessagesStore } from "@/lib/store/messages";
 import { useAuthStore } from "@/lib/store/auth";
 import { sendMessageRead } from "@/lib/ws";
 import { dayKey, formatDayDivider } from "@/lib/time";
+import { displayNameFor } from "@/lib/conversation-utils";
 import type { Conversation, Message } from "@/lib/types";
 
 const EMPTY_MESSAGES: Message[] = [];
@@ -147,7 +148,7 @@ export function MessageList({
 
     const showSender = message.sender_id !== lastSenderId && message.type !== "system";
     const senderMember = memberById.get(message.sender_id);
-    const senderName = senderMember?.user?.display_name ?? "Unknown";
+    const senderName = displayNameFor(senderMember);
 
     rows.push(
       <MessageBubble
@@ -177,7 +178,10 @@ export function MessageList({
       </ScrollArea>
       <TypingIndicator
         conversationId={conversationId}
-        typingUserNames={(userId) => memberById.get(userId)?.user?.display_name ?? null}
+        typingUserNames={(userId) => {
+          const m = memberById.get(userId);
+          return m ? displayNameFor(m) : null;
+        }}
       />
     </div>
   );

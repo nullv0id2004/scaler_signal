@@ -60,6 +60,8 @@ export interface Message {
   created_at: string;
   edited_at: string | null;
   deleted_at: string | null;
+  /** ISO timestamp when this message will disappear, if the conversation has disappearing messages on. */
+  expires_at?: string | null;
   // client-only fields (optimistic send)
   temp_id?: string;
   status?: MessageStatus;
@@ -75,6 +77,10 @@ export interface ConversationMember {
   last_delivered_message_id: number | null;
   muted: boolean;
   user?: User;
+  /** Caller's own bubble color override for this conversation (only meaningful on the viewer's own member row). */
+  chat_color?: string | null;
+  /** Viewer's nickname for this member's user, if set. */
+  nickname?: string | null;
 }
 
 export interface Conversation {
@@ -85,6 +91,8 @@ export interface Conversation {
   created_by: number;
   created_at: string;
   members?: ConversationMember[];
+  /** Disappearing-message timer in seconds, or null/undefined when off. */
+  disappearing_seconds?: number | null;
 }
 
 export interface ConversationSummary extends Conversation {
@@ -233,4 +241,30 @@ export interface MemberUpdatePayload {
   conversation_id: number;
   event: "added" | "removed" | "role_changed" | "left";
   member: ConversationMember;
+}
+
+// ---------- Media / Contacts / Disappearing / Chat color REST ----------
+
+export interface ConversationMediaOut {
+  images: Message[];
+  files: Message[];
+}
+
+export interface ContactInfo {
+  user_id: number;
+  nickname: string | null;
+  note: string | null;
+}
+
+export interface UpdateContactIn {
+  nickname?: string | null;
+  note?: string | null;
+}
+
+export interface SetDisappearingIn {
+  seconds: number | null;
+}
+
+export interface SetChatColorIn {
+  color: string | null;
 }
