@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Paperclip, SendHorizontal, Image as ImageIcon } from "lucide-react";
+import { Paperclip, SendHorizontal, Image as ImageIcon, Smile } from "lucide-react";
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,15 @@ import { uploadAttachment, ApiError } from "@/lib/api";
 import type { Message } from "@/lib/types";
 
 const TYPING_IDLE_MS = 2000;
+
+// Compact emoji palette for the composer picker.
+const EMOJI_PALETTE = [
+  "😀", "😁", "😂", "🤣", "😊", "😍", "😘", "😎",
+  "🤔", "😴", "😅", "😇", "🙃", "😉", "🥳", "😭",
+  "😡", "👍", "👎", "👏", "🙏", "🙌", "💪", "🔥",
+  "❤️", "🧡", "💛", "💚", "💙", "💜", "✨", "🎉",
+  "😮", "😢", "🤯", "🥺", "😜", "🤗", "👀", "💯",
+];
 
 export function Composer({
   conversationId,
@@ -29,10 +38,44 @@ export function Composer({
   const addOptimistic = useMessagesStore((s) => s.addOptimistic);
   const [content, setContent] = React.useState("");
   const [uploading, setUploading] = React.useState(false);
+  const [showEmoji, setShowEmoji] = React.useState(false);
   const isTypingRef = React.useRef(false);
   const idleTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const imageInputRef = React.useRef<HTMLInputElement>(null);
+  const textareaRef = React.useRef<HTMLTextAreaElement>(null);
+  const emojiRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    if (!showEmoji) return;
+    function onDocClick(e: MouseEvent) {
+      if (emojiRef.current && !emojiRef.current.contains(e.target as Node)) setShowEmoji(false);
+    }
+    document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
+  }, [showEmoji]);
+
+  function insertEmoji(emoji: string) {
+    const ta = textareaRef.current;
+    const start = ta?.selectionStart ?? content.length;
+    const end = ta?.selectionEnd ?? content.length;
+    const next = content.slice(0, start) + emoji + content.slice(end);
+    setContent(next);
+    if (!isTypingRef.current) {
+      sendTypingStart({ conversation_id: conversationId });
+      isTypingRef.current = true;
+    }
+    if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+    idleTimerRef.current = setTimeout(stopTyping, TYPING_IDLE_MS);
+    requestAnimationFrame(() => {
+      const el = textareaRef.current;
+      if (el) {
+        el.focus();
+        const pos = start + emoji.length;
+        el.setSelectionRange(pos, pos);
+      }
+    });
+  }
 
   function stopTyping() {
     if (isTypingRef.current) {
@@ -220,7 +263,33 @@ export function Composer({
         >
           <ImageIcon className="h-5 w-5" />
         </Button>
+        <div ref={emojiRef} className="relative">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            title="Emoji"
+            onClick={() => setShowEmoji((v) => !v)}
+          >
+            <Smile className="h-5 w-5" />
+          </Button>
+          {showEmoji ? (
+            <div className="absolute bottom-12 left-0 z-20 grid w-64 grid-cols-8 gap-0.5 rounded-lg border border-border bg-bg-elevated p-2 shadow-xl">
+              {EMOJI_PALETTE.map((emoji) => (
+                <button
+                  key={emoji}
+                  type="button"
+                  onClick={() => insertEmoji(emoji)}
+                  className="rounded p-1 text-lg transition-transform hover:scale-125 hover:bg-bg-hover"
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
+          ) : null}
+        </div>
         <Textarea
+          ref={textareaRef}
           value={content}
           onChange={handleChange}
           onKeyDown={onKeyDown}
