@@ -1,3 +1,4 @@
+# trigger: first hardened frontend deploy (CI build)
 name: Deploy Frontend (Azure App Service)
 
 on:
