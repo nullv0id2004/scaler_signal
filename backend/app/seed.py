@@ -32,6 +32,7 @@ from app.models import (
     User,
 )
 from app.models.enums import MemberRole, MessageType
+from app.services.phone import normalize_phone
 
 # backend/uploads — anchored on this file's location (app/seed.py -> app/ ->
 # backend/) so it's correct regardless of the process's cwd, matching
@@ -93,7 +94,9 @@ async def _wipe_and_recreate(engine_: AsyncEngine) -> None:
 async def _create_users(session: AsyncSession) -> dict[str, User]:
     users: dict[str, User] = {}
     for username, display_name, phone in USERS:
-        user = User(username=username, display_name=display_name, phone=phone)
+        # Store phones normalized (matching what verify_otp compares against)
+        # even though USERS lists them in a human-friendly punctuated form.
+        user = User(username=username, display_name=display_name, phone=normalize_phone(phone))
         session.add(user)
         users[username] = user
     await session.flush()
