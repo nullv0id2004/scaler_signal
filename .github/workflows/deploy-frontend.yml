@@ -1,3 +1,4 @@
+# trigger: redeploy after publish-profile fix
 name: Deploy Frontend (Azure App Service)
 
 on:
