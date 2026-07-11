@@ -26,3 +26,15 @@ async_session = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit
 async def get_session():
     async with async_session() as s:
         yield s
+
+
+def get_session_factory() -> async_sessionmaker[AsyncSession]:
+    """Dependency that hands back the session *factory* itself (not an
+    opened session). Used by the WebSocket route, which needs to own a
+    session's full open/close lifecycle manually — including timeout-guarding
+    the close — rather than delegating it to FastAPI's automatic
+    generator-dependency teardown (see app/ws/routes.py for why). Tests
+    override this the same way they override `get_session`, pointing it at
+    their isolated test engine's sessionmaker.
+    """
+    return async_session
