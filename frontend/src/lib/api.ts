@@ -17,6 +17,17 @@ import type {
 
 export const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
+/**
+ * Resolve a media path (attachment/avatar) to an absolute URL. The backend
+ * serves uploads at `${API_BASE}/uploads/...` (a relative path from the API),
+ * which would otherwise resolve against the frontend origin and 404.
+ */
+export function resolveMediaUrl(url: string | null | undefined): string {
+  if (!url) return "";
+  if (/^(https?:|data:|blob:)/.test(url)) return url;
+  return `${API_BASE}${url.startsWith("/") ? "" : "/"}${url}`;
+}
+
 export class ApiError extends Error {
   status: number;
   constructor(status: number, message: string) {

@@ -11,6 +11,7 @@ import { ReactionPicker, ReactionPills, ReactionTrigger } from "@/components/cha
 import { sendReactionAdd, sendReactionRemove } from "@/lib/ws";
 import { useAuthStore } from "@/lib/store/auth";
 import { deriveStatus } from "@/lib/store/messages";
+import { resolveMediaUrl } from "@/lib/api";
 import type { Message } from "@/lib/types";
 
 function formatBytes(n: number): string {
@@ -131,10 +132,10 @@ export function MessageBubble({
               <p>This message was deleted</p>
             ) : message.type === "image" && message.attachment ? (
               <div className="flex flex-col gap-1">
-                <a href={message.attachment.url} target="_blank" rel="noreferrer">
+                <a href={resolveMediaUrl(message.attachment.url)} target="_blank" rel="noreferrer">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={message.attachment.url}
+                    src={resolveMediaUrl(message.attachment.url)}
                     alt={message.attachment.filename}
                     className="max-h-72 max-w-full rounded-lg object-cover"
                   />
@@ -143,7 +144,7 @@ export function MessageBubble({
               </div>
             ) : message.type === "file" && message.attachment ? (
               <a
-                href={message.attachment.url}
+                href={resolveMediaUrl(message.attachment.url)}
                 target="_blank"
                 rel="noreferrer"
                 className="flex items-center gap-2.5 rounded-lg bg-black/10 px-2.5 py-2 hover:bg-black/20"
