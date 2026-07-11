@@ -1,0 +1,34 @@
+[project]
+name = "signal-clone-backend"
+version = "0.1.0"
+description = "Signal-clone chat app backend"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi",
+    "uvicorn[standard]",
+    "sqlalchemy>=2",
+    "aiosqlite",
+    "alembic",
+    "pydantic-settings",
+    "python-jose[cryptography]",
+    "python-multipart",
+    "passlib",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "pytest-asyncio",
+    "httpx",
+    "anyio",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["app*"]
