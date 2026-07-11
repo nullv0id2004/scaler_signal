@@ -3,8 +3,11 @@
 import { queryClient } from "@/lib/query-client";
 import { useMessagesStore } from "@/lib/store/messages";
 import { usePresenceStore } from "@/lib/store/presence";
+import { useUiStore } from "@/lib/store/ui";
+import { displayNameFor } from "@/lib/conversation-utils";
 import { toast } from "sonner";
 import type {
+  Conversation,
   MemberUpdatePayload,
   MessageAckPayload,
   MessageNewPayload,
@@ -160,6 +163,20 @@ function dispatchServerEvent(envelope: WsEnvelope) {
         const isFocused = typeof document !== "undefined" && document.visibilityState === "visible";
         if (!isFocused) {
           toast(payload.content ?? "New message", { description: "New message received" });
+        }
+
+        const { notificationsEnabled } = useUiStore.getState();
+        if (
+          notificationsEnabled &&
+          typeof Notification !== "undefined" &&
+          Notification.permission === "granted" &&
+          typeof document !== "undefined" &&
+          document.visibilityState !== "visible"
+        ) {
+          const convo = queryClient.getQueryData<Conversation>(["conversation", payload.conversation_id]);
+          const senderMember = convo?.members?.find((m) => m.user_id === payload.sender_id);
+          const title = senderMember ? displayNameFor(senderMember) : "New message";
+          new Notification(title, { body: payload.content ?? "Sent an attachment" });
         }
       }
       break;

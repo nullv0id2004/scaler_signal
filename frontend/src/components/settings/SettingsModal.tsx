@@ -12,8 +12,15 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { UserAvatar } from "@/components/ui/avatar";
-import { useUiStore } from "@/lib/store/ui";
+import { cn } from "@/lib/utils";
+import { useUiStore, type Theme } from "@/lib/store/ui";
 import { useAuthStore } from "@/lib/store/auth";
+
+const THEME_OPTIONS: { value: Theme; label: string }[] = [
+  { value: "dark", label: "Dark" },
+  { value: "light", label: "Light" },
+  { value: "system", label: "System" },
+];
 
 function Row({
   icon,
@@ -42,7 +49,9 @@ function Row({
 
 export function SettingsModal({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const theme = useUiStore((s) => s.theme);
-  const toggleTheme = useUiStore((s) => s.toggleTheme);
+  const setTheme = useUiStore((s) => s.setTheme);
+  const notificationsEnabled = useUiStore((s) => s.notificationsEnabled);
+  const setNotificationsEnabled = useUiStore((s) => s.setNotificationsEnabled);
   const user = useAuthStore((s) => s.user);
 
   return (
@@ -66,14 +75,38 @@ export function SettingsModal({ open, onOpenChange }: { open: boolean; onOpenCha
         <div className="flex flex-col divide-y divide-border">
           <Row
             icon={<Moon className="h-4 w-4" />}
-            title="Dark mode"
-            description="Toggle between Signal's dark and light appearance"
-            right={<Switch checked={theme === "dark"} onCheckedChange={toggleTheme} />}
+            title="Appearance"
+            description="Choose Dark, Light, or match your system"
+            right={
+              <div className="flex items-center gap-1 rounded-lg bg-bg-active p-0.5">
+                {THEME_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setTheme(opt.value)}
+                    className={cn(
+                      "rounded-md px-2 py-1 text-xs font-medium transition-colors",
+                      theme === opt.value
+                        ? "bg-bg-elevated text-foreground"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            }
           />
           <Row
             icon={<Bell className="h-4 w-4" />}
             title="Notifications"
-            description="Coming soon"
+            description="Show desktop notifications for new messages"
+            right={
+              <Switch
+                checked={notificationsEnabled}
+                onCheckedChange={setNotificationsEnabled}
+              />
+            }
           />
           <Row icon={<Lock className="h-4 w-4" />} title="Privacy" description="Coming soon" />
           <Row icon={<UserIcon className="h-4 w-4" />} title="Profile" description="Coming soon" />

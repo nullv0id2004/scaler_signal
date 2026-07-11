@@ -46,6 +46,10 @@ export function MessageList({
     members.forEach((m) => map.set(m.user_id, m));
     return map;
   }, [members]);
+  const selfChatColor = React.useMemo(
+    () => members.find((m) => m.user_id === selfId)?.chat_color ?? null,
+    [members, selfId]
+  );
 
   // Sync REST history pages into the shared message store.
   React.useEffect(() => {
@@ -161,6 +165,7 @@ export function MessageList({
         conversationId={conversationId}
         otherMemberIds={otherMemberIds}
         onReply={onReply}
+        chatColor={selfChatColor}
       />
     );
     lastSenderId = message.sender_id;

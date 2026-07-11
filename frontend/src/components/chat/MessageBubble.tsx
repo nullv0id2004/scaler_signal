@@ -29,6 +29,7 @@ export function MessageBubble({
   conversationId,
   otherMemberIds,
   onReply,
+  chatColor,
 }: {
   message: Message;
   isOwn: boolean;
@@ -38,6 +39,7 @@ export function MessageBubble({
   conversationId: number;
   otherMemberIds: number[];
   onReply: (message: Message) => void;
+  chatColor?: string | null;
 }) {
   const selfId = useAuthStore((s) => s.user?.id ?? -1);
   const [pickerOpen, setPickerOpen] = React.useState(false);
@@ -112,6 +114,7 @@ export function MessageBubble({
           <div
             onTouchStart={onTouchStart}
             onTouchEnd={onTouchEnd}
+            style={isOwn && chatColor ? { backgroundColor: chatColor } : undefined}
             className={cn(
               "rounded-2xl px-3 py-2 text-sm leading-relaxed shadow-sm",
               isOwn

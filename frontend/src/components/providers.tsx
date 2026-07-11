@@ -10,10 +10,12 @@ import { useAuthStore } from "@/lib/store/auth";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const initTheme = useUiStore((s) => s.initTheme);
+  const initNotifications = useUiStore((s) => s.initNotifications);
   const rehydrate = useAuthStore((s) => s.rehydrate);
 
   React.useEffect(() => {
     initTheme();
+    initNotifications();
     rehydrate();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

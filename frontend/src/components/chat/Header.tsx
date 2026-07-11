@@ -2,11 +2,11 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { ArrowLeft, Info, Phone, Video } from "lucide-react";
+import { ArrowLeft, Info, Phone, Timer, Video } from "lucide-react";
 import { UserAvatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { conversationAvatar, conversationTitle, otherMember } from "@/lib/conversation-utils";
-import { formatLastSeen } from "@/lib/time";
+import { formatLastSeen, formatDisappearingLabel } from "@/lib/time";
 import { usePresenceStore } from "@/lib/store/presence";
 import { useAuthStore } from "@/lib/store/auth";
 import { toast } from "sonner";
@@ -32,6 +32,7 @@ export function Header({
       : online
         ? "online"
         : formatLastSeen(lastSeen ?? other?.user?.last_seen_at ?? null);
+  const disappearingLabel = formatDisappearingLabel(conversation.disappearing_seconds);
 
   function comingSoon(label: string) {
     toast.info(`${label} coming soon`);
@@ -45,7 +46,18 @@ export function Header({
       <button onClick={onOpenInfo} className="flex min-w-0 flex-1 items-center gap-3 rounded-lg px-1 py-1 hover:bg-bg-hover">
         <UserAvatar id={avatar.id} name={title} src={avatar.url} className="h-10 w-10" />
         <div className="min-w-0 text-left">
-          <div className="truncate text-sm font-medium text-foreground">{title}</div>
+          <div className="flex items-center gap-1.5">
+            <div className="truncate text-sm font-medium text-foreground">{title}</div>
+            {disappearingLabel ? (
+              <span
+                title={`Disappearing messages: ${disappearingLabel}`}
+                className="flex shrink-0 items-center gap-0.5 text-xs text-muted-foreground"
+              >
+                <Timer className="h-3 w-3" />
+                {disappearingLabel}
+              </span>
+            ) : null}
+          </div>
           <div className="truncate text-xs text-muted-foreground">{subtitle}</div>
         </div>
       </button>
