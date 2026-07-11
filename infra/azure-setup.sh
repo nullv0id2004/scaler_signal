@@ -12,8 +12,8 @@ set -euo pipefail
 RG="scaler-signal-rg"
 LOCATION="centralindia"           # e.g. eastus, westeurope, centralindia
 PLAN="scaler-signal-plan"
-BACKEND_APP="scaler-signal-api"   # -> https://scaler-signal-api.azurewebsites.net
-FRONTEND_APP="scaler-signal-web"  # -> https://scaler-signal-web.azurewebsites.net
+BACKEND_APP="signal-api"   # -> https://signal-api.azurewebsites.net
+FRONTEND_APP="signal-frontend"  # -> https://signal-frontend.azurewebsites.net
 # ---------------------------------------------------------------------------
 
 BACKEND_URL="https://${BACKEND_APP}.azurewebsites.net"

@@ -7,8 +7,8 @@ Pick your two app names up front (must be **globally unique**). This guide uses:
 
 | App      | Name (change these)  | URL                                          |
 |----------|----------------------|----------------------------------------------|
-| Backend  | `scaler-signal-api`  | `https://scaler-signal-api.azurewebsites.net` |
-| Frontend | `scaler-signal-web`  | `https://scaler-signal-web.azurewebsites.net` |
+| Backend  | `signal-api`  | `https://signal-api.azurewebsites.net` |
+| Frontend | `signal-frontend`  | `https://signal-frontend.azurewebsites.net` |
 
 ---
 
@@ -17,7 +17,7 @@ Pick your two app names up front (must be **globally unique**). This guide uses:
 1. Portal → **Create a resource** → **Web App**.
 2. **Basics** tab:
    - **Resource Group** → *Create new* → `scaler-signal-rg`.
-   - **Name**: `scaler-signal-api`.
+   - **Name**: `signal-api`.
    - **Publish**: `Code`.
    - **Runtime stack**: `Python 3.12`.
    - **Operating System**: `Linux`.
@@ -35,7 +35,7 @@ Pick your two app names up front (must be **globally unique**). This guide uses:
    | `SCM_DO_BUILD_DURING_DEPLOYMENT` | `true` |
    | `DATABASE_URL` | `sqlite+aiosqlite:////home/signal.db` |
    | `JWT_SECRET` | `c95ef980ba74a5b4f47acce9649aecf570e9b7a355a3afbcd15d936db877a333` |
-   | `CORS_ORIGINS` | `["https://scaler-signal-web.azurewebsites.net"]` |
+   | `CORS_ORIGINS` | `["https://signal-frontend.azurewebsites.net"]` |
    | `SMS_PROVIDER` | `console` |
    | `OTP_DEV_MODE` | `true` |
 
@@ -59,7 +59,7 @@ Pick your two app names up front (must be **globally unique**). This guide uses:
 
 7. **Create a resource** → **Web App** → **Basics**:
    - **Resource Group**: `scaler-signal-rg` (the same one).
-   - **Name**: `scaler-signal-web`.
+   - **Name**: `signal-frontend`.
    - **Publish**: `Code`.
    - **Runtime stack**: `Node 22 LTS`.
    - **Operating System**: `Linux`.
@@ -72,8 +72,8 @@ Pick your two app names up front (must be **globally unique**). This guide uses:
    | Name | Value |
    |------|-------|
    | `SCM_DO_BUILD_DURING_DEPLOYMENT` | `true` |
-   | `NEXT_PUBLIC_API_URL` | `https://scaler-signal-api.azurewebsites.net` |
-   | `NEXT_PUBLIC_WS_URL` | `wss://scaler-signal-api.azurewebsites.net` |
+   | `NEXT_PUBLIC_API_URL` | `https://signal-api.azurewebsites.net` |
+   | `NEXT_PUBLIC_WS_URL` | `wss://signal-api.azurewebsites.net` |
 
    > `NEXT_PUBLIC_*` are baked in at **build** time (Oryx reads them during the
    > remote build), so they must exist before the first deploy.
@@ -95,8 +95,8 @@ The repo already has `.github/workflows/deploy-backend.yml` and
       - `AZURE_BACKEND_PUBLISH_PROFILE` → paste the **entire** backend XML.
       - `AZURE_FRONTEND_PUBLISH_PROFILE` → paste the frontend XML.
     - **Variables** tab → **New repository variable**:
-      - `BACKEND_APP_NAME` → `scaler-signal-api`
-      - `FRONTEND_APP_NAME` → `scaler-signal-web`
+      - `BACKEND_APP_NAME` → `signal-api`
+      - `FRONTEND_APP_NAME` → `signal-frontend`
 14. GitHub → **Actions** tab → run **Deploy Backend** and **Deploy Frontend**
     (Run workflow), or just push a commit to `main`.
 
@@ -104,9 +104,9 @@ The repo already has `.github/workflows/deploy-backend.yml` and
 
 ## 4. Verify
 
-- Backend health: open `https://scaler-signal-api.azurewebsites.net/api/health`
+- Backend health: open `https://signal-api.azurewebsites.net/api/health`
   → `{"status":"ok"}`.
-- Frontend: open `https://scaler-signal-web.azurewebsites.net` → log in as a
+- Frontend: open `https://signal-frontend.azurewebsites.net` → log in as a
   seeded user + OTP `123456`.
 - First backend boot runs `alembic upgrade head` (creates the DB). If login
   fails, seed users: backend app → **SSH** (or **Console**) →
