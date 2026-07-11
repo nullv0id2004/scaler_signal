@@ -4,8 +4,9 @@
 set -e
 
 # Run pending DB migrations. DATABASE_URL points at /home (persistent disk),
-# so the SQLite file survives restarts and redeploys.
-alembic upgrade head || echo "alembic upgrade failed (continuing)"
+# so the SQLite file survives restarts and redeploys. Fail hard (set -e) rather
+# than booting against a stale/broken schema and 500-ing at runtime.
+alembic upgrade head
 
 # gunicorn + uvicorn worker = ASGI + WebSocket support on App Service.
 # App Service injects $PORT; bind to it.

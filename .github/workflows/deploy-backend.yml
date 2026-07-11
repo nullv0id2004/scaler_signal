@@ -1,4 +1,3 @@
-# trigger: redeploy after publish-profile fix
 name: Deploy Backend (Azure App Service)
 
 on:
@@ -15,7 +14,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Azure builds the app remotely (Oryx) using backend/requirements.txt,
+      # Guard against swapped secrets: the publish profile embeds its target app
+      # name (msdeploySite). Fail loudly if it isn't the app we intend to deploy.
+      - name: Verify publish profile targets the backend app
+        env:
+          PROFILE: ${{ secrets.AZURE_BACKEND_PUBLISH_PROFILE }}
+          EXPECT: ${{ vars.BACKEND_APP_NAME }}
+        run: |
+          site=$(printf '%s' "$PROFILE" | grep -o 'msdeploySite="[^"]*"' | head -1 | sed 's/.*="//;s/"$//')
+          echo "profile targets: '$site' ; expected: '$EXPECT'"
+          [ -n "$site" ] || { echo "::error::could not parse msdeploySite from AZURE_BACKEND_PUBLISH_PROFILE"; exit 1; }
+          [ "$site" = "$EXPECT" ] || { echo "::error::profile targets '$site', not '$EXPECT' — backend/frontend secrets likely swapped"; exit 1; }
+
+      # Azure builds the app remotely (Oryx) from backend/requirements.txt,
       # because the Web App has SCM_DO_BUILD_DURING_DEPLOYMENT=true.
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
@@ -23,3 +34,19 @@ jobs:
           app-name: ${{ vars.BACKEND_APP_NAME }}
           publish-profile: ${{ secrets.AZURE_BACKEND_PUBLISH_PROFILE }}
           package: backend
+
+      # Green only if the app actually boots and serves — not just if the upload
+      # succeeded. Startup runs migrations + gunicorn, which can fail post-upload.
+      - name: Health check
+        env:
+          BASE: ${{ vars.BACKEND_URL }}
+        run: |
+          [ -n "$BASE" ] || { echo "::error::repo variable BACKEND_URL is not set"; exit 1; }
+          url="$BASE/api/health"
+          echo "polling $url"
+          for i in $(seq 1 30); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' "$url" || true)
+            [ "$code" = "200" ] && { echo "healthy"; exit 0; }
+            echo "attempt $i/30: HTTP $code"; sleep 10
+          done
+          echo "::error::backend never returned 200 from $url (check Log stream)"; exit 1

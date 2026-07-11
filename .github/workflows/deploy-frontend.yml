@@ -1,4 +1,3 @@
-# trigger: redeploy after publish-profile fix
 name: Deploy Frontend (Azure App Service)
 
 on:
@@ -15,13 +14,54 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Azure builds remotely (Oryx): npm install + npm run build, then `npm start`.
-      # NEXT_PUBLIC_* vars are baked at BUILD time, so they must exist as App
-      # Settings on the Web App (set in infra/azure-setup.sh) — Oryx reads them
-      # during the remote build. Web App has SCM_DO_BUILD_DURING_DEPLOYMENT=true.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      # Guard against swapped secrets (see backend workflow for rationale).
+      - name: Verify publish profile targets the frontend app
+        env:
+          PROFILE: ${{ secrets.AZURE_FRONTEND_PUBLISH_PROFILE }}
+          EXPECT: ${{ vars.FRONTEND_APP_NAME }}
+        run: |
+          site=$(printf '%s' "$PROFILE" | grep -o 'msdeploySite="[^"]*"' | head -1 | sed 's/.*="//;s/"$//')
+          echo "profile targets: '$site' ; expected: '$EXPECT'"
+          [ -n "$site" ] || { echo "::error::could not parse msdeploySite from AZURE_FRONTEND_PUBLISH_PROFILE"; exit 1; }
+          [ "$site" = "$EXPECT" ] || { echo "::error::profile targets '$site', not '$EXPECT' — backend/frontend secrets likely swapped"; exit 1; }
+
+      # Build in CI (not remote Oryx) so NEXT_PUBLIC_* are baked explicitly and
+      # reproducibly. WS URL is derived from the API URL (https -> wss).
+      # Requires the frontend Web App to have SCM_DO_BUILD_DURING_DEPLOYMENT=false
+      # so Azure serves this build instead of rebuilding.
+      - name: Build
+        working-directory: frontend
+        env:
+          NEXT_PUBLIC_API_URL: ${{ vars.BACKEND_URL }}
+        run: |
+          [ -n "$NEXT_PUBLIC_API_URL" ] || { echo "::error::repo variable BACKEND_URL is not set"; exit 1; }
+          export NEXT_PUBLIC_WS_URL="${NEXT_PUBLIC_API_URL/https:/wss:}"
+          echo "building with API=$NEXT_PUBLIC_API_URL WS=$NEXT_PUBLIC_WS_URL"
+          npm ci
+          npm run build
+
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
           app-name: ${{ vars.FRONTEND_APP_NAME }}
           publish-profile: ${{ secrets.AZURE_FRONTEND_PUBLISH_PROFILE }}
           package: frontend
+
+      - name: Health check
+        env:
+          BASE: ${{ vars.FRONTEND_URL }}
+        run: |
+          [ -n "$BASE" ] || { echo "::error::repo variable FRONTEND_URL is not set"; exit 1; }
+          echo "polling $BASE/"
+          for i in $(seq 1 30); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' "$BASE/" || true)
+            [ "$code" = "200" ] && { echo "healthy"; exit 0; }
+            echo "attempt $i/30: HTTP $code"; sleep 10
+          done
+          echo "::error::frontend never returned 200 from $BASE/ (check Log stream)"; exit 1
