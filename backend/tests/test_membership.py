@@ -82,8 +82,20 @@ async def test_leave_emits_system_message_and_removes_member(session, alice, bob
     assert any(m.type == "system" and "left" in (m.content or "") for m in msgs)
 
 
+def _phone_for(handle: str) -> str:
+    """Deterministic fake phone number for a test handle (real OTP login now
+    requires a phone, not an arbitrary handle string)."""
+    import hashlib
+
+    digits = str(int(hashlib.sha256(handle.encode()).hexdigest(), 16) % 10**10).zfill(10)
+    return f"+1{digits}"
+
+
 async def _login(client, handle):
-    r = await client.post("/api/auth/verify-otp", json={"handle": handle, "otp": "123456"})
+    phone = _phone_for(handle)
+    r = await client.post("/api/auth/request-otp", json={"phone": phone})
+    dev_code = r.json()["dev_code"]
+    r = await client.post("/api/auth/verify-otp", json={"phone": phone, "code": dev_code})
     body = r.json()
     return body["token"], body["user"]
 

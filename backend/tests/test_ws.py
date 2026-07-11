@@ -80,8 +80,20 @@ def ws_client(tmp_path_factory):
         pass
 
 
+def _phone_for(handle: str) -> str:
+    """Deterministic fake phone number for a test handle (real OTP login now
+    requires a phone, not an arbitrary handle string)."""
+    import hashlib
+
+    digits = str(int(hashlib.sha256(handle.encode()).hexdigest(), 16) % 10**10).zfill(10)
+    return f"+1{digits}"
+
+
 def _login(sync_client, handle):
-    r = sync_client.post("/api/auth/verify-otp", json={"handle": handle, "otp": "123456"})
+    phone = _phone_for(handle)
+    r = sync_client.post("/api/auth/request-otp", json={"phone": phone})
+    dev_code = r.json()["dev_code"]
+    r = sync_client.post("/api/auth/verify-otp", json={"phone": phone, "code": dev_code})
     body = r.json()
     return body["token"], body["user"]
 

@@ -104,3 +104,37 @@ async def test_seed_is_idempotent(test_engine):
     async with session_maker() as s:
         result = await s.execute(select(User))
         assert len(list(result.scalars().all())) == 7
+
+
+@pytest.mark.asyncio
+async def test_seed_phones_are_normalized(test_engine):
+    """Seed users must be stored with normalized phones (no dashes) since
+    otp.verify_otp matches against normalize_phone(input) -- a raw punctuated
+    phone in the DB would never match and would spawn a duplicate account."""
+    from app.services.phone import normalize_phone
+
+    session_maker = async_sessionmaker(test_engine, class_=AsyncSession, expire_on_commit=False)
+    await seed(engine_=test_engine, session_factory=session_maker)
+
+    async with session_maker() as s:
+        result = await s.execute(select(User).where(User.username == "alice"))
+        alice = result.scalar_one()
+        assert alice.phone == normalize_phone(alice.phone) == "+12025550111"
+
+
+@pytest.mark.asyncio
+async def test_seed_user_logs_in_via_punctuated_phone(test_engine):
+    """End-to-end regression check: requesting/verifying an OTP for a seed
+    user's phone (given in the docs' punctuated form) must resolve to the
+    existing seeded user, not create a new one."""
+    from app.services import otp as otp_service
+
+    session_maker = async_sessionmaker(test_engine, class_=AsyncSession, expire_on_commit=False)
+    await seed(engine_=test_engine, session_factory=session_maker)
+
+    async with session_maker() as s:
+        result = await otp_service.request_otp(s, "+1-202-555-0111")
+        code = result["dev_code"]
+        user, is_new = await otp_service.verify_otp(s, "+1 (202) 555 0111", code)
+        assert is_new is False
+        assert user.username == "alice"
