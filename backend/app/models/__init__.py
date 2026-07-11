@@ -5,6 +5,7 @@ from app.models.member import ConversationMember
 from app.models.message import Message
 from app.models.reaction import MessageReaction
 from app.models.attachment import Attachment
+from app.models.contact_note import ContactNote
 
 __all__ = [
     "User",
@@ -13,6 +14,7 @@ __all__ = [
     "Message",
     "MessageReaction",
     "Attachment",
+    "ContactNote",
     "ConversationType",
     "MemberRole",
     "MessageType",

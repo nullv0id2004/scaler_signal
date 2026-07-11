@@ -25,3 +25,5 @@ class ConversationMember(Base):
         ForeignKey("messages.id"), nullable=True
     )
     muted: Mapped[bool] = mapped_column(Boolean, default=False)
+    # Per-member, per-conversation UI color override (hex, e.g. "#2c6bed").
+    chat_color: Mapped[str | None] = mapped_column(String, nullable=True)

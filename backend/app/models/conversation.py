@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, String, func
+from sqlalchemy import DateTime, ForeignKey, Integer, String, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.db import Base
@@ -16,3 +16,5 @@ class Conversation(Base):
     avatar_url: Mapped[str | None] = mapped_column(String, nullable=True)
     created_by: Mapped[int] = mapped_column(ForeignKey("users.id"))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=func.now())
+    # Disappearing messages timer, in seconds. NULL or 0 means disabled.
+    disappearing_seconds: Mapped[int | None] = mapped_column(Integer, nullable=True)

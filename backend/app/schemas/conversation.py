@@ -17,6 +17,8 @@ class ConversationMemberOut(BaseModel):
     last_read_message_id: int | None = None
     last_delivered_message_id: int | None = None
     muted: bool
+    chat_color: str | None = None
+    nickname: str | None = None  # viewer-specific: requester's contact_notes.nickname for this member
     user: UserOut | None = None
 
 
@@ -29,6 +31,7 @@ class ConversationOut(BaseModel):
     avatar_url: str | None = None
     created_by: int
     created_at: datetime
+    disappearing_seconds: int | None = None
 
 
 class ConversationWithMembersOut(ConversationOut):
@@ -58,3 +61,11 @@ class AddMembersIn(BaseModel):
 
 class SetRoleIn(BaseModel):
     role: str
+
+
+class SetDisappearingIn(BaseModel):
+    seconds: int | None = None
+
+
+class SetChatColorIn(BaseModel):
+    color: str | None = None

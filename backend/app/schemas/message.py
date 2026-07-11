@@ -47,9 +47,15 @@ class MessageOut(BaseModel):
     created_at: datetime
     edited_at: datetime | None = None
     deleted_at: datetime | None = None
+    expires_at: str | None = None  # ISO timestamp; disappearing-messages expiry
     reactions: list[ReactionOut] = []
     attachment: AttachmentOut | None = None
     status: str | None = None  # populated by caller when member context is available
+
+
+class MediaOut(BaseModel):
+    images: list[MessageOut] = []
+    files: list[MessageOut] = []
 
 
 class CreateMessageIn(BaseModel):
