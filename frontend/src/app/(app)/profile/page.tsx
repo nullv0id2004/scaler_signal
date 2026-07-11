@@ -58,7 +58,7 @@ export default function ProfilePage() {
         about: about,
         avatar_url: avatarUrl ?? undefined,
       });
-      setUser(res.user);
+      setUser(res);
       toast.success("Profile updated");
       router.push("/");
     } catch (err) {

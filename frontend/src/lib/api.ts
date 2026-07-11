@@ -127,7 +127,7 @@ export function useSearchUsers(q: string) {
 }
 
 export async function patchMe(patch: { display_name?: string; about?: string; avatar_url?: string }) {
-  return apiFetch<{ user: User }>("/users/me", {
+  return apiFetch<User>("/users/me", {
     method: "PATCH",
     body: JSON.stringify(patch),
   });
