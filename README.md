@@ -2,11 +2,41 @@
 
 A functional clone of the Signal messenger: real-time one-on-one and group chat with a privacy-focused, Signal-faithful UI. Register with a username/phone (mocked OTP), manage contacts, create direct and group conversations, and send/receive messages in real time with delivery/read receipts, typing indicators, reactions, replies, and attachments.
 
-> **Live demo:** <!-- DEMO_URL --> _(add after deploying)_
->
-> **Test login:** log in by phone — e.g. Alice `+12025550111` (country US +1, number `2025550111`). A real OTP is generated; in dev mode the code is shown on the verify screen and logged to the server console (no SMS/real phone needed). Full list in [`docs/SEED_USERS.md`](docs/SEED_USERS.md).
-
 Encryption is simulated/mocked per the assignment brief — the focus is recreating Signal's UX and core messaging workflows, not real cryptography.
+
+---
+
+## 🚀 Try It Live
+
+| | |
+|---|---|
+| **App** | **https://signal-frontend-d5geb2b4a9frb8ch.centralindia-01.azurewebsites.net** |
+| **API** | https://signal-api-bwh8fse9esf2hjep.centralindia-01.azurewebsites.net |
+
+**Log in (30 seconds, no real phone):**
+
+1. Open the app and choose to log in by **phone**.
+2. Enter one of the phone numbers below (e.g. Alice → country **US +1**, number **`2025550111`**).
+3. The OTP is a **mocked dev code** — it's shown on the verify screen (and returned by `request-otp`). Enter it. That's it.
+
+> There is **no fixed OTP** — a fresh code is generated each request. Just read the code the app shows you.
+
+**Demo accounts** (all pre-loaded with conversations):
+
+| Log in as | Phone | Country / number | Best for seeing… |
+|---|---|---|---|
+| **Alice Carter** | `+12025550111` | US +1 · `2025550111` | **Start here** — in 2 direct chats + both groups |
+| Bob Nguyen | `+12025550112` | US +1 · `2025550112` | Direct chat with Alice & Emma |
+| Carol Diaz | `+12025550113` | US +1 · `2025550113` | Direct chat with Alice |
+| David Osei | `+12025550114` | US +1 · `2025550114` | "Project X" group |
+| Emma Ford | `+12025550115` | US +1 · `2025550115` | Direct chat with Bob |
+| Frank Lee | `+12025550116` | US +1 · `2025550116` | Admin of "Project X" |
+
+**What's already in there:** 3 one-on-one chats (Alice↔Bob, Alice↔Carol, Bob↔Emma) and 2 groups — **Weekend Trip** (Alice, Bob, Carol, Emma) and **Project X** (Frank, David, Alice) — with real message threads.
+
+**Play through it:** log in as **Alice** in one browser and **Bob** in a second (or an incognito window), open the Alice↔Bob chat in both, and watch messages, typing indicators, and read receipts sync live. Try creating a new group, reacting to a message, replying, or uploading an image.
+
+Full transcript of the seeded data: [`docs/DEMO_DATA.md`](docs/DEMO_DATA.md).
 
 ---
 
@@ -159,6 +189,9 @@ Open `http://localhost:3000`, log in by phone (US +1, `2025550111` for Alice); t
 ---
 
 ## Seed Data & Test Logins
+
+> This section is for **local** development (`python -m app.seed`). To play with
+> the **hosted** app instead, use the [🚀 Try It Live](#-try-it-live) accounts above.
 
 `python -m app.seed` creates 7 users, 3 direct + 2 group conversations, ~100 messages with staggered timestamps, replies, reactions, one image attachment, and mixed read state (so unread badges appear). **Log in by phone** (real OTP; dev code shown on the verify screen + server console).
 
