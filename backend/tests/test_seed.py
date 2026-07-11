@@ -2,8 +2,16 @@ import pytest
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+import app.seed as seed_module
 from app.models import Conversation, ConversationMember, Message, User
 from app.seed import seed
+
+
+@pytest.fixture(autouse=True)
+def _isolate_seed_uploads(tmp_path, monkeypatch):
+    """seed()'s image attachment writes to app.seed.UPLOAD_DIR — point that
+    at a temp dir during tests so runs don't litter the real backend/uploads/."""
+    monkeypatch.setattr(seed_module, "UPLOAD_DIR", tmp_path)
 
 
 @pytest.mark.asyncio
