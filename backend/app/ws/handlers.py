@@ -51,9 +51,21 @@ async def handle_message_send(session: AsyncSession, user, payload: dict) -> Non
     out.status = receipt_service.status_for(message, members)
     message_data = out.model_dump(mode="json")
 
-    # 1. Ack the sender: sending -> sent.
+    # 1. Ack the sender: sending -> sent. Flat shape per docs/DESIGN.md §2
+    #    (temp_id + real message_id + status); the sender already holds the
+    #    optimistic body, so the ack only needs to reconcile id/status.
     await manager.send_to_user(
-        user.id, frame("message.ack", {"temp_id": temp_id, "message": message_data})
+        user.id,
+        frame(
+            "message.ack",
+            {
+                "temp_id": temp_id,
+                "message_id": message.id,
+                "status": message_data["status"],
+                "conversation_id": conversation_id,
+                "created_at": message_data["created_at"],
+            },
+        ),
     )
 
     # 2. Broadcast the new message to every other member.

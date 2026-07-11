@@ -153,8 +153,8 @@ def test_ws_message_roundtrip(ws_client):
 
     ack = _drain_until(alice_ws, "message.ack")
     assert ack["payload"]["temp_id"] == "temp-1"
-    assert ack["payload"]["message"]["content"] == "hello bob"
-    real_id = ack["payload"]["message"]["id"]
+    assert ack["payload"]["status"] in ("sent", "delivered", "read")
+    real_id = ack["payload"]["message_id"]
 
     new_msg = _drain_until(bob_ws, "message.new")
     assert new_msg["payload"]["content"] == "hello bob"
@@ -232,7 +232,7 @@ async def test_dispatch_message_send_acks_sender_and_broadcasts_to_others(sessio
     acks = [f for f in alice_ws.sent if f["type"] == "message.ack"]
     assert len(acks) == 1
     assert acks[0]["payload"]["temp_id"] == "tmp-1"
-    real_id = acks[0]["payload"]["message"]["id"]
+    real_id = acks[0]["payload"]["message_id"]
 
     news = [f for f in bob_ws.sent if f["type"] == "message.new"]
     assert len(news) == 1
