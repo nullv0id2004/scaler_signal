@@ -131,12 +131,21 @@ export function MessageList({
     return () => el.removeEventListener("scroll", handleScroll);
   }, [handleScroll]);
 
+  // Guarantee unique React keys even if the store transiently holds a dup.
+  const seenKeys = new Set<string>();
+  const uniqueMessages = messages.filter((m) => {
+    const k = m.temp_id ?? `id:${m.id}`;
+    if (seenKeys.has(k)) return false;
+    seenKeys.add(k);
+    return true;
+  });
+
   // Day + sender grouping
   const rows: React.ReactNode[] = [];
   let lastDay: string | null = null;
   let lastSenderId: number | null = null;
 
-  messages.forEach((message, idx) => {
+  uniqueMessages.forEach((message, idx) => {
     const day = dayKey(message.created_at);
     if (day !== lastDay) {
       rows.push(

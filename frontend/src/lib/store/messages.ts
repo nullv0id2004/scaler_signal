@@ -39,6 +39,19 @@ function sortByCreatedThenId(a: Message, b: Message) {
   return (a.id ?? 0) - (b.id ?? 0);
 }
 
+/** Remove duplicate messages by real id, keeping the first occurrence.
+ * Optimistic messages (which carry a temp_id and a negative placeholder id)
+ * are never deduped against each other. */
+function dedupeById(list: Message[]): Message[] {
+  const seen = new Set<number>();
+  return list.filter((m) => {
+    if (m.temp_id) return true;
+    if (seen.has(m.id)) return false;
+    seen.add(m.id);
+    return true;
+  });
+}
+
 export const useMessagesStore = create<MessagesState>((set) => ({
   byConversation: {},
   hasMoreOlder: {},
@@ -46,7 +59,7 @@ export const useMessagesStore = create<MessagesState>((set) => ({
 
   setInitialPages: (conversationId, pagesOldestFirst) => {
     set((s) => ({
-      byConversation: { ...s.byConversation, [conversationId]: pagesOldestFirst },
+      byConversation: { ...s.byConversation, [conversationId]: dedupeById(pagesOldestFirst) },
     }));
   },
 
@@ -88,7 +101,10 @@ export const useMessagesStore = create<MessagesState>((set) => ({
         created_at: payload.created_at ?? updated[idx].created_at,
         temp_id: undefined,
       };
-      return { byConversation: { ...s.byConversation, [payload.conversation_id]: updated } };
+      // Drop any pre-existing entry with the now-real id (e.g. already pulled
+      // in via a history page) so the acked message isn't duplicated.
+      const deduped = updated.filter((m, i) => i === idx || m.id !== payload.message_id);
+      return { byConversation: { ...s.byConversation, [payload.conversation_id]: deduped } };
     });
   },
 
