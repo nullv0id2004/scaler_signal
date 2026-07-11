@@ -4,7 +4,7 @@ A functional clone of the Signal messenger: real-time one-on-one and group chat 
 
 > **Live demo:** <!-- DEMO_URL --> _(add after deploying)_
 >
-> **Test login:** any seed username (e.g. `alice`) + OTP `123456`.
+> **Test login:** log in by phone — e.g. Alice `+12025550111` (country US +1, number `2025550111`). A real OTP is generated; in dev mode the code is shown on the verify screen and logged to the server console (no SMS/real phone needed). Full list in [`docs/SEED_USERS.md`](docs/SEED_USERS.md).
 
 Encryption is simulated/mocked per the assignment brief — the focus is recreating Signal's UX and core messaging workflows, not real cryptography.
 
@@ -16,7 +16,7 @@ Encryption is simulated/mocked per the assignment brief — the focus is recreat
 - **FastAPI** (async) — async-native with first-class WebSocket support, the natural fit for real-time chat.
 - **SQLAlchemy 2.0** (async, `aiosqlite`) + **Alembic** migrations — typed models, dialect-agnostic so a Postgres swap is a URL change.
 - **SQLite** (WAL mode) — mandated by the brief; single-file, zero-infra, fine at demo scale.
-- **JWT** auth (`python-jose`), mocked fixed OTP.
+- **JWT** auth (`python-jose`). Real OTP lifecycle (random, hashed, expiring, rate-limited) behind a pluggable `SmsSender` — console/dev sender by default (surfaces the code), Twilio adapter stubbed for production.
 - **Native FastAPI WebSockets** + in-process connection manager for live push.
 - **pytest** — 63 passing tests.
 
@@ -34,7 +34,7 @@ Rationale for each choice is documented in [`docs/DECISIONS.md`](docs/DECISIONS.
 ## Features
 
 **Core**
-- Mocked OTP onboarding (login → verify → profile setup), session persistence.
+- Full phone-based onboarding: country-code phone entry → real OTP (6-digit, expiring, rate-limited, resend) → profile setup (display name + avatar upload). Session persistence.
 - Conversation list sorted by recent activity, search, unread badges, last-message preview, online/last-seen (mocked).
 - One-on-one messaging in real time: timestamps, delivery/read receipts (single → double → filled-blue), typing indicators, message status (sending/sent/delivered/read). All persisted.
 - Group messaging: create with name + members, view members, admin add/remove, role changes, leave. System messages ("X added Y"). All persisted.
@@ -99,8 +99,8 @@ Detail + rationale: [`docs/DESIGN.md §1`](docs/DESIGN.md) and [`docs/DECISIONS.
 
 | Method | Path | Purpose |
 |---|---|---|
-| POST | `/auth/request-otp` | Mock-send fixed OTP |
-| POST | `/auth/verify-otp` | Verify OTP → `{ token, user, is_new }` |
+| POST | `/auth/request-otp` | `{ phone }` → generate + "send" OTP; returns `{ ok, expires_in, resend_in, dev_code? }` (dev_code in dev mode); 429 if rate-limited |
+| POST | `/auth/verify-otp` | `{ phone, code }` → `{ token, user, is_new }`; 400 wrong/expired, 429 too many attempts; new phone auto-creates a user |
 | POST | `/auth/complete-profile` | First-time display name + avatar |
 | GET | `/auth/me` | Current user |
 | GET | `/users/search?q=` | Search users to add |
@@ -154,13 +154,13 @@ npm install
 NEXT_PUBLIC_API_URL=http://localhost:8000 NEXT_PUBLIC_WS_URL=ws://localhost:8000 npm run dev
 ```
 
-Open `http://localhost:3000`, log in as `alice` with OTP `123456`. See [`frontend/.env.example`](frontend/.env.example).
+Open `http://localhost:3000`, log in by phone (US +1, `2025550111` for Alice); the dev OTP shows on the verify screen. See [`frontend/.env.example`](frontend/.env.example).
 
 ---
 
 ## Seed Data & Test Logins
 
-`python -m app.seed` creates 7 users, 3 direct + 2 group conversations, ~100 messages with staggered timestamps, replies, reactions, one image attachment, and mixed read state (so unread badges appear). **Fixed OTP for everyone: `123456`.**
+`python -m app.seed` creates 7 users, 3 direct + 2 group conversations, ~100 messages with staggered timestamps, replies, reactions, one image attachment, and mixed read state (so unread badges appear). **Log in by phone** (real OTP; dev code shown on the verify screen + server console).
 
 | Username | Display name | Notes |
 |---|---|---|
@@ -194,7 +194,7 @@ The backend serves over `wss://` and REST over `https://`; ensure `CORS_ORIGINS`
 
 ## Assumptions
 
-- **Mocked auth & crypto:** OTP is a fixed `123456`; no real SMS or end-to-end encryption (simulated per the brief).
+- **Real OTP, dev SMS delivery:** OTP is genuinely generated/hashed/expiring/rate-limited, but delivered via a console/dev sender (code shown on-screen + logged) rather than a paid SMS provider — set `SMS_PROVIDER=twilio` + `TWILIO_*` to send real SMS (adapter stubbed). No real end-to-end encryption (simulated per the brief).
 - **In-process WebSocket manager:** presence/typing and broadcast are single-instance. Horizontal scale-out would need a Redis pub/sub channel layer.
 - **SQLite persistence:** single file; concurrent writes serialize (fine at demo scale). In production on Azure, the file must live on a mounted volume (above).
 - **Seeding resets demo data:** `app.seed` wipes and recreates the demo dataset; don't run it against real data.
