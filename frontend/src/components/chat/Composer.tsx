@@ -91,6 +91,7 @@ export function Composer({
   }
 
   function handleChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
+    interimRef.current = "";
     setContent(e.target.value);
     if (e.target.value.trim().length === 0) {
       stopTyping();
@@ -104,13 +105,23 @@ export function Composer({
     idleTimerRef.current = setTimeout(stopTyping, TYPING_IDLE_MS);
   }
 
-  // Append dictated (final) speech chunks to the message box + keep the typing
-  // indicator alive so the other side sees activity while you talk.
-  const appendTranscript = React.useCallback(
-    (text: string) => {
-      const trimmed = text.trim();
-      if (!trimmed) return;
-      setContent((prev) => (prev ? prev.replace(/\s*$/, "") + " " + trimmed : trimmed));
+  // Live-dictate into the message box: show interim words as you speak, then
+  // commit the phrase when the engine finalizes it. `interimRef` holds the
+  // uncommitted tail currently shown so the next update can replace it.
+  const interimRef = React.useRef("");
+  const handleTranscript = React.useCallback(
+    (text: string, isFinal: boolean) => {
+      const cleaned = text.trim();
+      const prevInterim = interimRef.current;
+      interimRef.current = isFinal ? "" : cleaned;
+      setContent((prev) => {
+        let base = prev;
+        if (prevInterim && base.endsWith(prevInterim)) {
+          base = base.slice(0, base.length - prevInterim.length).replace(/\s*$/, "");
+        }
+        if (!cleaned) return base;
+        return base ? base + " " + cleaned : cleaned;
+      });
       if (!isTypingRef.current) {
         sendTypingStart({ conversation_id: conversationId });
         isTypingRef.current = true;
@@ -123,9 +134,7 @@ export function Composer({
   );
 
   const speech = useSpeechRecognition({
-    onResult: (text, isFinal) => {
-      if (isFinal) appendTranscript(text);
-    },
+    onResult: (text, isFinal) => handleTranscript(text, isFinal),
     onError: (code) => {
       if (code === "not-allowed" || code === "service-not-allowed") {
         toast.error("Microphone permission denied");
@@ -183,6 +192,7 @@ export function Composer({
       temp_id,
     });
 
+    interimRef.current = "";
     setContent("");
     onClearReply();
   }
