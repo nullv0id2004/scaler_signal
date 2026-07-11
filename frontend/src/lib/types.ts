@@ -57,6 +57,7 @@ export interface Message {
   reply_to?: ReplyPreview | null;
   attachment?: Attachment | null;
   reactions: Reaction[];
+  is_forwarded?: boolean;
   created_at: string;
   edited_at: string | null;
   deleted_at: string | null;

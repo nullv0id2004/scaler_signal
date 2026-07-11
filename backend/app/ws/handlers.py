@@ -19,6 +19,7 @@ from app.services import conversations as conversation_service
 from app.services import messages as message_service
 from app.services import reactions as reaction_service
 from app.services import receipts as receipt_service
+from app.ws.broadcast import broadcast_message_deleted, broadcast_message_new
 from app.ws.manager import manager
 
 
@@ -169,11 +170,35 @@ async def handle_reaction(session: AsyncSession, user, payload: dict) -> None:
     )
 
 
+async def handle_message_delete(session: AsyncSession, user, payload: dict) -> None:
+    message_id = payload.get("message_id")
+    try:
+        message = await message_service.delete(session, user, message_id)
+    except HTTPException as exc:
+        await _send_error(user.id, exc.detail)
+        return
+    await broadcast_message_deleted(session, message.conversation_id, message.id)
+
+
+async def handle_message_forward(session: AsyncSession, user, payload: dict) -> None:
+    message_id = payload.get("message_id")
+    conversation_ids = payload.get("conversation_ids") or []
+    try:
+        created = await message_service.forward(session, user, message_id, conversation_ids)
+    except HTTPException as exc:
+        await _send_error(user.id, exc.detail)
+        return
+    for message in created:
+        await broadcast_message_new(session, message)
+
+
 _HANDLERS = {
     "message.send": handle_message_send,
     "typing.start": lambda s, u, p: handle_typing(s, u, p, True),
     "typing.stop": lambda s, u, p: handle_typing(s, u, p, False),
     "message.read": handle_message_read,
+    "message.delete": handle_message_delete,
+    "message.forward": handle_message_forward,
     "reaction.add": handle_reaction,
     "reaction.remove": handle_reaction,
 }

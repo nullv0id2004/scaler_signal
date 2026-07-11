@@ -50,6 +50,7 @@ class MessageOut(BaseModel):
     expires_at: str | None = None  # ISO timestamp; disappearing-messages expiry
     reactions: list[ReactionOut] = []
     attachment: AttachmentOut | None = None
+    is_forwarded: bool = False
     status: str | None = None  # populated by caller when member context is available
 
 
@@ -63,3 +64,8 @@ class CreateMessageIn(BaseModel):
     content: str | None = None
     reply_to_id: int | None = None
     type: str = "text"
+
+
+class ForwardMessageIn(BaseModel):
+    message_id: int
+    conversation_ids: list[int]

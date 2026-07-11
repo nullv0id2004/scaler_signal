@@ -1,14 +1,16 @@
 "use client";
 
 import * as React from "react";
-import { FileText, Reply as ReplyIcon } from "lucide-react";
+import { FileText, Forward as ForwardIcon, Reply as ReplyIcon, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { formatTime } from "@/lib/time";
 import { UserAvatar } from "@/components/ui/avatar";
 import { Receipt } from "@/components/chat/Receipt";
 import { ReplyQuote } from "@/components/chat/ReplyPreview";
 import { ReactionPicker, ReactionPills, ReactionTrigger } from "@/components/chat/ReactionBar";
-import { sendReactionAdd, sendReactionRemove } from "@/lib/ws";
+import { ForwardDialog } from "@/components/chat/ForwardDialog";
+import { deleteMessage, sendReactionAdd, sendReactionRemove } from "@/lib/ws";
 import { useAuthStore } from "@/lib/store/auth";
 import { deriveStatus } from "@/lib/store/messages";
 import { resolveMediaUrl } from "@/lib/api";
@@ -43,7 +45,15 @@ export function MessageBubble({
 }) {
   const selfId = useAuthStore((s) => s.user?.id ?? -1);
   const [pickerOpen, setPickerOpen] = React.useState(false);
+  const [forwardOpen, setForwardOpen] = React.useState(false);
   const longPressTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function handleDelete() {
+    if (window.confirm("Delete this message for everyone?")) {
+      deleteMessage({ message_id: message.id });
+      toast.success("Message deleted");
+    }
+  }
 
   if (message.type === "system") {
     return (
@@ -94,13 +104,33 @@ export function MessageBubble({
           >
             <div className="pointer-events-auto flex gap-1">
               <ReactionTrigger onPress={() => setPickerOpen((o) => !o)} />
-              <button
-                onClick={() => onReply(message)}
-                title="Reply"
-                className="flex h-7 w-7 items-center justify-center rounded-full bg-bg-elevated text-muted-foreground shadow hover:text-foreground"
-              >
-                <ReplyIcon className="h-4 w-4" />
-              </button>
+              {!message.deleted_at ? (
+                <button
+                  onClick={() => onReply(message)}
+                  title="Reply"
+                  className="flex h-7 w-7 items-center justify-center rounded-full bg-bg-elevated text-muted-foreground shadow hover:text-foreground"
+                >
+                  <ReplyIcon className="h-4 w-4" />
+                </button>
+              ) : null}
+              {!message.deleted_at ? (
+                <button
+                  onClick={() => setForwardOpen(true)}
+                  title="Forward"
+                  className="flex h-7 w-7 items-center justify-center rounded-full bg-bg-elevated text-muted-foreground shadow hover:text-foreground"
+                >
+                  <ForwardIcon className="h-4 w-4" />
+                </button>
+              ) : null}
+              {isOwn && !message.deleted_at ? (
+                <button
+                  onClick={handleDelete}
+                  title="Delete for everyone"
+                  className="flex h-7 w-7 items-center justify-center rounded-full bg-bg-elevated text-muted-foreground shadow hover:text-danger"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              ) : null}
             </div>
           </div>
 
@@ -123,6 +153,12 @@ export function MessageBubble({
               message.deleted_at && "italic opacity-60"
             )}
           >
+            {message.is_forwarded && !message.deleted_at ? (
+              <div className="mb-0.5 flex items-center gap-1 text-[11px] italic opacity-70">
+                <ForwardIcon className="h-3 w-3" /> Forwarded
+              </div>
+            ) : null}
+
             {message.reply_to ? (
               <ReplyQuote
                 preview={message.reply_to}
@@ -177,6 +213,8 @@ export function MessageBubble({
 
         <ReactionPills reactions={message.reactions} messageId={message.id} align={isOwn ? "end" : "start"} />
       </div>
+
+      <ForwardDialog open={forwardOpen} onOpenChange={setForwardOpen} messageId={message.id} />
     </div>
   );
 }

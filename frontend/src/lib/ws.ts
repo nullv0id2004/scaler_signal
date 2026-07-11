@@ -151,6 +151,14 @@ export function sendReactionRemove(payload: ReactionTogglePayload) {
   send({ type: "reaction.remove", payload });
 }
 
+export function deleteMessage(payload: { message_id: number }) {
+  send({ type: "message.delete", payload });
+}
+
+export function forwardMessage(payload: { message_id: number; conversation_ids: number[] }) {
+  send({ type: "message.forward", payload });
+}
+
 // ---------- server -> client dispatch ----------
 
 function dispatchServerEvent(envelope: WsEnvelope) {
@@ -184,6 +192,12 @@ function dispatchServerEvent(envelope: WsEnvelope) {
     case "message.ack": {
       const payload = envelope.payload as MessageAckPayload;
       useMessagesStore.getState().ackMessage(payload);
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
+      break;
+    }
+    case "message.deleted": {
+      const payload = envelope.payload as { conversation_id: number; message_id: number };
+      useMessagesStore.getState().markDeleted(payload.conversation_id, payload.message_id);
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
       break;
     }

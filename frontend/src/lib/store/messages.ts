@@ -31,6 +31,7 @@ interface MessagesState {
   updateReactions: (payload: ReactionUpdatePayload) => void;
   applyReceipt: (payload: ReceiptUpdatePayload) => void;
   removeMessage: (conversationId: number, messageId: number) => void;
+  markDeleted: (conversationId: number, messageId: number) => void;
 }
 
 function sortByCreatedThenId(a: Message, b: Message) {
@@ -181,6 +182,22 @@ export const useMessagesStore = create<MessagesState>((set) => ({
           [conversationId]: list.filter((m) => m.id !== messageId),
         },
       };
+    });
+  },
+
+  markDeleted: (conversationId, messageId) => {
+    set((s) => {
+      const list = s.byConversation[conversationId] ?? [];
+      const idx = list.findIndex((m) => m.id === messageId);
+      if (idx === -1) return {};
+      const updated = [...list];
+      updated[idx] = {
+        ...updated[idx],
+        deleted_at: new Date().toISOString(),
+        content: null,
+        attachment: null,
+      };
+      return { byConversation: { ...s.byConversation, [conversationId]: updated } };
     });
   },
 }));
