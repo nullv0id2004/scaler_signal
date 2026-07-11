@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -11,11 +12,13 @@ import { Label } from "@/components/ui/label";
 import { UserAvatar } from "@/components/ui/avatar";
 import { patchMe, uploadAttachment, resolveMediaUrl, ApiError } from "@/lib/api";
 import { useAuthStore } from "@/lib/store/auth";
+import { PRESET_AVATARS } from "@/lib/preset-avatars";
 
 const ABOUT_MAX = 500;
 
 export default function ProfilePage() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { user, setUser } = useAuthStore();
 
   const [displayName, setDisplayName] = React.useState(user?.display_name ?? "");
@@ -59,6 +62,11 @@ export default function ProfilePage() {
         avatar_url: avatarUrl ?? undefined,
       });
       setUser(res);
+      // Conversation lists, the chat header and message-bubble avatars read the
+      // member avatar_url from these caches, not the auth store — refetch them
+      // so the new photo shows everywhere, not just the own-profile spots.
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
+      queryClient.invalidateQueries({ queryKey: ["conversation"] });
       toast.success("Profile updated");
       router.push("/");
     } catch (err) {
@@ -116,6 +124,33 @@ export default function ProfilePage() {
             >
               {uploading ? "Uploading…" : avatarUrl ? "Change photo" : "Add photo"}
             </button>
+
+            <div className="mt-2 flex flex-col items-center gap-2">
+              <span className="text-xs text-muted-foreground">Or pick an avatar</span>
+              <div className="flex flex-wrap justify-center gap-2">
+                {PRESET_AVATARS.map((preset, i) => {
+                  const selected = avatarUrl === preset;
+                  return (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => setAvatarUrl(preset)}
+                      aria-label={`Avatar ${i + 1}`}
+                      aria-pressed={selected}
+                      className={`rounded-full outline-none transition focus-visible:ring-2 focus-visible:ring-ring ${
+                        selected ? "ring-2 ring-signal-blue ring-offset-2 ring-offset-background" : ""
+                      }`}
+                    >
+                      <img
+                        src={preset}
+                        alt=""
+                        className="h-11 w-11 rounded-full"
+                      />
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </div>
 
           <div className="flex flex-col gap-1.5">
