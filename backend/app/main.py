@@ -23,6 +23,16 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
+    @app.get("/")
+    async def root():
+        """Friendly landing payload so the bare API URL isn't a 404."""
+        return {
+            "service": "Signal Clone API",
+            "status": "ok",
+            "docs": "/docs",
+            "health": "/api/health",
+        }
+
     @app.get("/api/health")
     async def health():
         return {"status": "ok"}
