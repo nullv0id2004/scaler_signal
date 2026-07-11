@@ -1,15 +1,17 @@
 "use client";
 
 import * as React from "react";
-import { Paperclip, SendHorizontal, Image as ImageIcon, Smile } from "lucide-react";
+import { Paperclip, SendHorizontal, Image as ImageIcon, Smile, Mic, MicOff } from "lucide-react";
 import { toast } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { ReplyQuote } from "@/components/chat/ReplyPreview";
 import { useAuthStore } from "@/lib/store/auth";
 import { useMessagesStore } from "@/lib/store/messages";
+import { useSpeechRecognition } from "@/lib/useSpeechRecognition";
 import { sendMessage, sendTypingStart, sendTypingStop, makeTempId } from "@/lib/ws";
 import { uploadAttachment, ApiError } from "@/lib/api";
+import { cn } from "@/lib/utils";
 import type { Message } from "@/lib/types";
 
 const TYPING_IDLE_MS = 2000;
@@ -102,8 +104,42 @@ export function Composer({
     idleTimerRef.current = setTimeout(stopTyping, TYPING_IDLE_MS);
   }
 
+  // Append dictated (final) speech chunks to the message box + keep the typing
+  // indicator alive so the other side sees activity while you talk.
+  const appendTranscript = React.useCallback(
+    (text: string) => {
+      const trimmed = text.trim();
+      if (!trimmed) return;
+      setContent((prev) => (prev ? prev.replace(/\s*$/, "") + " " + trimmed : trimmed));
+      if (!isTypingRef.current) {
+        sendTypingStart({ conversation_id: conversationId });
+        isTypingRef.current = true;
+      }
+      if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+      idleTimerRef.current = setTimeout(stopTyping, TYPING_IDLE_MS);
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [conversationId]
+  );
+
+  const speech = useSpeechRecognition({
+    onResult: (text, isFinal) => {
+      if (isFinal) appendTranscript(text);
+    },
+    onError: (code) => {
+      if (code === "not-allowed" || code === "service-not-allowed") {
+        toast.error("Microphone permission denied");
+      } else if (code !== "no-speech" && code !== "aborted") {
+        toast.error("Voice input error");
+      }
+    },
+  });
+
   React.useEffect(() => {
-    return () => stopTyping();
+    return () => {
+      stopTyping();
+      speech.stop();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [conversationId]);
 
@@ -111,6 +147,7 @@ export function Composer({
     const text = content.trim();
     if (!text) return;
     stopTyping();
+    speech.stop();
 
     const temp_id = makeTempId();
     const now = new Date().toISOString();
@@ -288,12 +325,24 @@ export function Composer({
             </div>
           ) : null}
         </div>
+        {speech.supported ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            title={speech.listening ? "Stop dictation" : "Dictate"}
+            onClick={() => (speech.listening ? speech.stop() : speech.start())}
+            className={cn(speech.listening && "animate-pulse text-danger")}
+          >
+            {speech.listening ? <MicOff className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
+          </Button>
+        ) : null}
         <Textarea
           ref={textareaRef}
           value={content}
           onChange={handleChange}
           onKeyDown={onKeyDown}
-          placeholder={uploading ? "Uploading…" : "Message"}
+          placeholder={uploading ? "Uploading…" : speech.listening ? "Listening…" : "Message"}
           rows={1}
           className="max-h-32 min-h-[2.75rem] flex-1"
         />
