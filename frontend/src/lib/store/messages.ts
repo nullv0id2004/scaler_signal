@@ -59,9 +59,18 @@ export const useMessagesStore = create<MessagesState>((set) => ({
   receipts: {},
 
   setInitialPages: (conversationId, pagesOldestFirst) => {
-    set((s) => ({
-      byConversation: { ...s.byConversation, [conversationId]: dedupeById(pagesOldestFirst) },
-    }));
+    set((s) => {
+      const incoming = dedupeById(pagesOldestFirst);
+      const existing = s.byConversation[conversationId] ?? [];
+      // Preserve locally-held messages the server snapshot doesn't include yet:
+      // still-optimistic sends (temp_id) and messages acked after this snapshot
+      // was fetched. Otherwise re-seeding on remount would drop just-sent messages
+      // until a full refresh.
+      const incomingIds = new Set(incoming.filter((m) => !m.temp_id).map((m) => m.id));
+      const extras = existing.filter((m) => m.temp_id || !incomingIds.has(m.id));
+      const merged = [...incoming, ...extras].sort(sortByCreatedThenId);
+      return { byConversation: { ...s.byConversation, [conversationId]: merged } };
+    });
   },
 
   appendOlderPage: (conversationId, page) => {
