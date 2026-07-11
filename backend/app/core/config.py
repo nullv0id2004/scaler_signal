@@ -1,4 +1,8 @@
-from pydantic_settings import BaseSettings, SettingsConfigDict
+import json
+from typing import Annotated
+
+from pydantic import field_validator
+from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -7,7 +11,27 @@ class Settings(BaseSettings):
     jwt_secret: str = "dev-secret-change-me"
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 60 * 24 * 7
-    cors_origins: list[str] = ["http://localhost:3000"]
+    # NoDecode: don't let pydantic-settings JSON-decode this env var. A plain
+    # value like `https://a.com,https://b.com` (or an empty string) would
+    # otherwise crash Settings() on boot. The validator below accepts a JSON
+    # array, a comma-separated list, or empty.
+    cors_origins: Annotated[list[str], NoDecode] = ["http://localhost:3000"]
+
+    @field_validator("cors_origins", mode="before")
+    @classmethod
+    def _parse_cors_origins(cls, v: object) -> list[str]:
+        if v is None:
+            return ["http://localhost:3000"]
+        if isinstance(v, list):
+            return v
+        if isinstance(v, str):
+            s = v.strip()
+            if not s:
+                return ["http://localhost:3000"]
+            if s.startswith("["):
+                return json.loads(s)
+            return [o.strip() for o in s.split(",") if o.strip()]
+        return ["http://localhost:3000"]
 
     # --- OTP lifecycle ---
     otp_ttl_seconds: int = 300
