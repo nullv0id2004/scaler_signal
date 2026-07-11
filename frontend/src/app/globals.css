@@ -1,0 +1,103 @@
+@import "tailwindcss";
+
+/*
+ * Signal-inspired palette. Dark theme is the default; ":root[data-theme='light']"
+ * overrides for the (settings-toggleable) light mode.
+ */
+:root {
+  --background: #0e0e0f;
+  --bg-elevated: #1b1c1f;
+  --bg-panel: #17181a;
+  --bg-hover: #232427;
+  --bg-active: #26272b;
+  --border: #2a2b2f;
+  --foreground: #e9e9ea;
+  --muted-foreground: #9a9ba1;
+  --signal-blue: #2c6bed;
+  --signal-blue-hover: #3a78f2;
+  --bubble-sent: #2c6bed;
+  --bubble-sent-fg: #ffffff;
+  --bubble-received: #26272b;
+  --bubble-received-fg: #e9e9ea;
+  --danger: #e5484d;
+  --success: #2ecc71;
+  --ring: #2c6bed;
+}
+
+:root[data-theme="light"] {
+  --background: #ffffff;
+  --bg-elevated: #f7f7f8;
+  --bg-panel: #f2f2f3;
+  --bg-hover: #ececed;
+  --bg-active: #e4e4e6;
+  --border: #e2e2e4;
+  --foreground: #1b1c1f;
+  --muted-foreground: #6b6c72;
+  --signal-blue: #2c6bed;
+  --signal-blue-hover: #1f5adb;
+  --bubble-sent: #2c6bed;
+  --bubble-sent-fg: #ffffff;
+  --bubble-received: #ececed;
+  --bubble-received-fg: #1b1c1f;
+  --danger: #d9363e;
+  --success: #1e9e56;
+  --ring: #2c6bed;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-bg-elevated: var(--bg-elevated);
+  --color-bg-panel: var(--bg-panel);
+  --color-bg-hover: var(--bg-hover);
+  --color-bg-active: var(--bg-active);
+  --color-border: var(--border);
+  --color-foreground: var(--foreground);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-signal-blue: var(--signal-blue);
+  --color-signal-blue-hover: var(--signal-blue-hover);
+  --color-bubble-sent: var(--bubble-sent);
+  --color-bubble-sent-fg: var(--bubble-sent-fg);
+  --color-bubble-received: var(--bubble-received);
+  --color-bubble-received-fg: var(--bubble-received-fg);
+  --color-danger: var(--danger);
+  --color-success: var(--success);
+  --color-ring: var(--ring);
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+}
+
+* {
+  border-color: var(--border);
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--bg-active);
+  border-radius: 8px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--muted-foreground);
+}
+
+.scrollbar-none {
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
