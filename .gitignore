@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+*.db
+*.db-wal
+*.db-shm
+.env
+backend/uploads/
+
+# Node / Next
+node_modules/
+.next/
+out/
+.DS_Store
+frontend/.env*.local
+
+# SDD scratch
+.superpowers/
